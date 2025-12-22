@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lector RSVP - Móvil</title>
+    <title>Lector RSVP Móvil</title>
     <style>
         :root {
             --bg-color: #f4f4f9;
@@ -14,10 +14,11 @@
             --primary-color: #2a9d8f;
             --secondary-color: #264653;
             --overlay-bg: rgba(255, 255, 255, 0.98);
-            --toolbar-bg: rgba(0, 0, 0, 0.85);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* Bloqueo de selección */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+        textarea, input { user-select: text; -webkit-user-select: text; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -26,65 +27,67 @@
             padding: 1rem; margin: 0; min-height: 100vh;
         }
 
+        /* --- Overlay de Rotación --- */
+        #rotate-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #264653; color: white; z-index: 10000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+        #rotate-overlay .icon { font-size: 4rem; animation: rotate-phone 2s infinite ease-in-out; margin-bottom: 20px;}
+        @keyframes rotate-phone { 0%, 10% { transform: rotate(0deg); } 40%, 60% { transform: rotate(90deg); } 90%, 100% { transform: rotate(0deg); } }
+
+        @media screen and (orientation: portrait) {
+            body.fullscreen-active #rotate-overlay { display: flex !important; }
+        }
+
         h1 { margin-bottom: 1rem; font-size: 1.5rem; text-align: center; margin-top: 1.5rem; }
+        .version-link { position: absolute; top: 1rem; right: 1rem; font-size: 0.9rem; color: var(--primary-color); text-decoration: none; border-bottom: 1px dashed; }
 
-        /* Enlace a versión desktop */
-        .version-link {
-            position: absolute; top: 1rem; right: 1rem;
-            font-size: 0.8rem; color: var(--primary-color);
-            text-decoration: none; border-bottom: 1px dashed;
-        }
-
-        .main-container {
-            width: 100%; max-width: 800px; display: flex; flex-direction: column;
-            gap: 15px; margin-bottom: 1rem;
-        }
+        .main-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 1rem; }
 
         textarea {
-            width: 100%; height: 120px; padding: 15px;
-            border: 1px solid #ddd; border-radius: var(--border-radius);
-            font-size: 1rem; resize: vertical; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            width: 100%; height: 120px; padding: 15px; border: 1px solid #ddd;
+            border-radius: var(--border-radius); font-size: 1rem; resize: vertical;
         }
 
         .controls-card {
             background: #fff; padding: 15px; border-radius: var(--border-radius);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            display: flex; flex-direction: column; gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 15px;
         }
 
-        .control-group { display: flex; gap: 10px; width: 100%; justify-content: space-between; }
+        .control-group { display: flex; gap: 10px; width: 100%; }
 
         button {
             padding: 15px 10px; font-size: 1rem; font-weight: 600; cursor: pointer;
             background-color: var(--primary-color); color: white; border: none;
             border-radius: 8px; flex: 1; transition: transform 0.1s;
         }
-        button:active { transform: scale(0.98); }
+        button:active { transform: scale(0.96); }
         button.stop { background-color: #e76f51; }
         button.fullscreen-btn { background-color: var(--secondary-color); }
-        button.context-btn { background-color: #457b9d; }
+        button.wpm-btn { background-color: #ddd; color: #333; font-size: 1.2rem; max-width: 60px; }
 
-        .wpm-container {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            background: #eee; padding: 10px; border-radius: 8px; width: 100%;
+        .wpm-stepper {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f8f8f8; padding: 5px; border-radius: 8px; width: 100%;
         }
-        input[type="number"] { 
-            padding: 8px; width: 80px; border-radius: 6px; border: 1px solid #ccc; 
-            font-size: 1.1rem; text-align: center;
-        }
+        .wpm-value { font-size: 1.5rem; font-weight: bold; flex: 1; text-align: center; font-family: monospace; }
 
+        /* --- Lector --- */
         #reader-display {
-            width: 100%; max-width: 800px; height: 200px;
+            width: 100%; max-width: 800px; height: 220px;
             background-color: var(--box-color); border-top: 4px solid var(--primary-color);
             box-shadow: 0 8px 20px rgba(0,0,0,0.12); border-radius: var(--border-radius);
             display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden; outline: none; touch-action: none; 
+            position: relative; overflow: hidden; outline: none; touch-action: manipulation;
         }
 
         #reader-display:fullscreen {
             width: 100vw; height: 100vh; max-width: none; border: none; border-radius: 0; background: #fff;
         }
 
+        /* Guías visuales */
         #reader-display::before, #reader-display::after {
             content: ''; position: absolute; width: 2px; height: 18px; background-color: #ddd;
             left: 50%; transform: translateX(-50%); z-index: 1;
@@ -95,74 +98,116 @@
         #reader-display:fullscreen::after { bottom: 0; height: 30px; opacity: 0.5; }
 
         .word-container {
-            font-family: 'Courier New', Courier, monospace; font-size: 2.8rem;
+            font-family: 'Courier New', Courier, monospace; font-size: 2.5rem;
             font-weight: bold; white-space: pre; display: flex; width: 100%; z-index: 2; line-height: 1;
         }
-        #reader-display:fullscreen .word-container { font-size: clamp(3rem, 15vw, 7rem); }
+        #reader-display:fullscreen .word-container { font-size: clamp(2.5rem, 10vw, 5rem); }
 
         .part-left { flex: 1; text-align: right; }
         .part-right { flex: 1; text-align: left; }
         .pivot { color: var(--accent-color); flex: 0 0 auto; }
         .paragraph-symbol { color: #e0e0e0; font-weight: normal; font-size: 0.8em;}
 
-        #toast {
-            position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
-            border-radius: 30px; font-size: 1rem; opacity: 0; transition: opacity 0.3s;
-            pointer-events: none; z-index: 10; white-space: nowrap;
-        }
-        #toast.show { opacity: 1; }
-
-        /* HUD Móvil Fullscreen */
+        /* --- HUD Minimalista Flotante (Cápsulas) --- */
         #mobile-fs-toolbar {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background-color: var(--toolbar-bg); color: white; padding: 15px;
-            display: none; justify-content: space-between; align-items: center;
-            z-index: 20; backdrop-filter: blur(5px);
+            position: fixed; 
+            bottom: 20px; right: 20px; left: auto; width: auto;
+            display: none; flex-direction: row; gap: 15px;
+            z-index: 20; pointer-events: none;
         }
         #reader-display:fullscreen #mobile-fs-toolbar { display: flex; }
 
-        .fs-controls-group { display: flex; align-items: center; gap: 15px; }
-        .fs-btn {
-            background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.5rem;
-            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        .fs-capsule {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            padding: 5px 10px;
+            border-radius: 30px;
+            display: flex; align-items: center; gap: 10px;
+            pointer-events: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        .fs-btn.exit { background: rgba(231, 111, 81, 0.8); font-size: 1.2rem; flex: 0 0 50px;}
-        #fsWpmDisplay { font-weight: bold; font-size: 1.1rem; min-width: 40px; text-align: center;}
 
+        .fs-wpm-btn { 
+            background: rgba(255,255,255,0.2); color: white; 
+            width: 40px; height: 40px; font-size: 1.5rem; 
+            border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center;
+        }
+        .fs-wpm-val { color: white; font-weight: bold; font-family: monospace; min-width: 50px; text-align: center; font-size: 1.2rem;}
+        
+        .fs-icon-btn {
+            background: rgba(255,255,255,0.15); color: white; border: none;
+            width: 40px; height: 40px; border-radius: 50%; 
+            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+        }
+        .fs-exit-btn { background: rgba(231, 111, 81, 0.9); }
+        .fs-ctx-btn { background: rgba(69, 123, 157, 0.9); }
+
+        /* Zonas de Feedback */
+        .tap-feedback {
+            position: absolute; top: 0; height: 100%; width: 20%;
+            display: flex; align-items: center; justify-content: center; font-size: 3rem; color: rgba(0,0,0,0.2);
+            opacity: 0; transition: opacity 0.2s; pointer-events: none;
+        }
+        .tap-feedback.left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.05), transparent); }
+        .tap-feedback.right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.05), transparent); }
+        .tap-feedback.active { opacity: 1; }
+
+        #toast {
+            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            border-radius: 30px; font-size: 1.2rem; opacity: 0; transition: opacity 0.2s;
+            pointer-events: none; z-index: 30; white-space: nowrap; font-weight: bold;
+        }
+        #toast.show { opacity: 1; }
+
+        /* --- Context Overlay (Texto completo) --- */
         #context-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--overlay-bg); z-index: 30; padding: 3rem 1.5rem;
+            position: fixed; /* Por defecto fixed para cubrir el viewport en modo normal */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--overlay-bg); z-index: 50; padding: 3rem 1.5rem;
             box-sizing: border-box; overflow-y: auto; display: none;
             font-size: 1.2rem; line-height: 1.6; color: #444; text-align: justify;
             -webkit-overflow-scrolling: touch;
         }
+        
+        /* Cuando estamos en fullscreen, el overlay debe ser absoluto dentro del lector */
+        #reader-display:fullscreen #context-overlay {
+            position: absolute; 
+            padding: 4rem 2rem; /* Más padding en pantalla completa para leer cómodo */
+        }
+
         #context-overlay.active { display: block; }
         .ctx-word { padding: 4px 2px; border-radius: 4px; display: inline-block; }
         .ctx-word.current { background-color: var(--primary-color); color: white; font-weight: bold; }
         .ctx-break { display: block; margin-top: 1.5rem; }
+        
         .close-ctx-btn {
             position: fixed; top: 1rem; right: 1rem; padding: 8px 15px;
-            background: var(--text-color); color: white; border-radius: 20px; z-index: 31;
-            font-size: 0.9rem;
+            background: var(--text-color); color: white; border-radius: 20px; z-index: 51; font-size: 0.9rem;
         }
-
-        .controls-info { font-size: 0.85rem; color: #666; margin-top: 15px; text-align: center; background: #eee; padding: 10px; border-radius: 8px;}
+        
+        .controls-info { font-size: 0.85rem; color: #666; margin-top: 15px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <a href="index.html?mode=desktop" class="version-link">Ir a Escritorio 💻</a>
+    <div id="rotate-overlay">
+        <div class="icon">↻</div>
+        <h2>Gira tu móvil</h2>
+        <p>Gira el dispositivo para mejor lectura.</p>
+    </div>
+
+    <a href="index.html?mode=desktop" class="version-link">Ir a versión de escritorio</a>
     <h1>Lector RSVP Móvil</h1>
 
     <div class="main-container">
         <textarea id="inputText" placeholder="Pega aquí tu texto."></textarea>
         
         <div class="controls-card">
-            <div class="wpm-container">
-                <label for="wpm">Velocidad:</label>
-                <input type="number" id="wpm" value="300" min="60" max="1200" step="25">
-                <label>WPM</label>
+            <div class="wpm-stepper">
+                <button class="wpm-btn" onclick="changeSpeedGlobal(-25)">-</button>
+                <span id="wpmDisplay" class="wpm-value">300</span>
+                <button class="wpm-btn" onclick="changeSpeedGlobal(25)">+</button>
             </div>
             
             <div class="control-group">
@@ -172,30 +217,37 @@
             
             <div class="control-group">
                  <button id="btnFullscreen" class="fullscreen-btn">Pantalla Completa ⛶</button>
-                 <button id="btnContext" class="context-btn">Ver Texto 📄</button>
+                 <button id="btnContext" class="context-btn" style="background-color: #457b9d;">Ver Texto 📄</button>
             </div>
         </div>
     </div>
 
     <div id="reader-display">
         <div class="word-container" id="wordOutput"></div>
+        
+        <div class="tap-feedback left" id="feedbackLeft">⏪</div>
+        <div class="tap-feedback right" id="feedbackRight">⏩</div>
+
         <div id="toast"></div>
         
         <div id="mobile-fs-toolbar">
-            <button id="btnFsExit" class="fs-btn exit">✖</button>
-            <div class="fs-controls-group">
-                <button id="btnFsSlower" class="fs-btn">🐢</button>
-                <span id="fsWpmDisplay">300</span>
-                <button id="btnFsFaster" class="fs-btn">🐇</button>
+            <div class="fs-capsule">
+                <button class="fs-wpm-btn" onclick="changeSpeedGlobal(-25)">-</button>
+                <span id="fsWpmDisplay" class="fs-wpm-val">300</span>
+                <button class="fs-wpm-btn" onclick="changeSpeedGlobal(25)">+</button>
+            </div>
+            <div class="fs-capsule" style="padding: 5px;">
+                <button id="btnFsContext" class="fs-icon-btn fs-ctx-btn" style="margin-right: 5px;">📄</button>
+                <button id="btnFsExit" class="fs-icon-btn fs-exit-btn">✖</button>
             </div>
         </div>
+
+        <div id="context-overlay"></div>
     </div>
     
     <div class="controls-info">
-        <p>👆 <b>Gestos:</b> Toque para Play/Pausa. Desliza ⬅➡ para saltar.</p>
+        <p><b>Gestos:</b> Doble toque lados para saltar. Triple toque izq para párrafo.</p>
     </div>
-
-    <div id="context-overlay"></div>
 
     <script>
         const PARAGRAPH_TOKEN = "___PB___";
@@ -204,8 +256,10 @@
         let isPlaying = false;
         let timerOut = null;
         let isContextOpen = false;
-        let touchStartX = 0;
-        let touchStartY = 0;
+        let currentWpm = 300;
+        let lastTapTime = 0;
+        let tapCount = 0;
+        let tapTimeout = null;
 
         const inputText = document.getElementById('inputText');
         const wordOutput = document.getElementById('wordOutput');
@@ -214,15 +268,29 @@
         const btnFullscreen = document.getElementById('btnFullscreen');
         const btnContext = document.getElementById('btnContext');
         const readerDisplay = document.getElementById('reader-display');
-        const wpmInput = document.getElementById('wpm');
         const toast = document.getElementById('toast');
         const contextOverlay = document.getElementById('context-overlay');
-        const btnFsExit = document.getElementById('btnFsExit');
-        const btnFsSlower = document.getElementById('btnFsSlower');
-        const btnFsFaster = document.getElementById('btnFsFaster');
+        const wpmDisplay = document.getElementById('wpmDisplay');
         const fsWpmDisplay = document.getElementById('fsWpmDisplay');
+        const btnFsExit = document.getElementById('btnFsExit');
+        const btnFsContext = document.getElementById('btnFsContext');
+        const feedbackLeft = document.getElementById('feedbackLeft');
+        const feedbackRight = document.getElementById('feedbackRight');
 
-        window.addEventListener('DOMContentLoaded', () => { renderWord("Listo"); updateFsWpmDisplay(); });
+        window.addEventListener('DOMContentLoaded', () => { renderWord("Listo"); updateDisplays(); });
+
+        window.changeSpeedGlobal = function(delta) {
+            currentWpm += delta;
+            if (currentWpm < 60) currentWpm = 60;
+            if (currentWpm > 1200) currentWpm = 1200;
+            updateDisplays();
+            showToast(`${currentWpm} WPM`);
+        }
+
+        function updateDisplays() {
+            wpmDisplay.textContent = currentWpm;
+            fsWpmDisplay.textContent = currentWpm;
+        }
 
         function initData() {
             const rawText = inputText.value.trim();
@@ -247,8 +315,7 @@
             const currentWord = words[currentIndex];
             renderWord(currentWord);
 
-            const wpm = parseInt(wpmInput.value) || 300;
-            const baseDelay = 60000 / wpm;
+            const baseDelay = 60000 / currentWpm;
             let finalDelay = baseDelay;
 
             if (currentWord === PARAGRAPH_TOKEN) {
@@ -297,76 +364,145 @@
             wordOutput.innerHTML = `<div class="part-left">${prefix}${left}</div><div class="pivot">${piv}</div><div class="part-right">${right}${suffix}</div>`;
         }
 
-        let toastTimer;
         function showToast(msg) {
             toast.textContent = msg; toast.classList.add('show'); clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => toast.classList.remove('show'), 1500);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 1000);
         }
 
-        function changeSpeed(delta) {
-            let current = parseInt(wpmInput.value) || 300;
-            let newVal = Math.max(60, Math.min(1500, current + delta));
-            wpmInput.value = newVal; updateFsWpmDisplay(); showToast(`${newVal} WPM`);
+        function flashFeedback(side) {
+            const el = side === 'left' ? feedbackLeft : feedbackRight;
+            el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 300);
         }
-        
-        function updateFsWpmDisplay() { fsWpmDisplay.textContent = wpmInput.value; }
 
         function skipWords(direction) {
             if (words.length === 0) return;
-            const wpm = parseInt(wpmInput.value) || 300;
-            const jumpSize = Math.max(4, Math.floor((wpm / 60) * 2.5)); 
+            const jumpSize = Math.max(5, Math.floor((currentWpm / 60) * 3));
             const delta = direction === 'left' ? -jumpSize : jumpSize;
             currentIndex = Math.max(0, Math.min(words.length - 1, currentIndex + delta));
-            renderWord(words[currentIndex]); showToast(direction === 'left' ? `⏪` : `⏩`);
+            renderWord(words[currentIndex]);
+            showToast(direction === 'left' ? `⏪ -${jumpSize}` : `⏩ +${jumpSize}`);
+            flashFeedback(direction);
         }
+
+        function skipParagraphPrev() {
+            if (words.length === 0) return;
+            let newIndex = Math.max(0, currentIndex - 2);
+            while (newIndex > 0 && words[newIndex] !== PARAGRAPH_TOKEN) newIndex--;
+            if (words[newIndex] === PARAGRAPH_TOKEN) newIndex++;
+            currentIndex = newIndex;
+            renderWord(words[currentIndex]);
+            showToast("⏮ Inicio Párrafo");
+            flashFeedback('left');
+        }
+
+        readerDisplay.addEventListener('touchend', (e) => {
+            // Ignorar toques en toolbar o botones
+            if (e.target.closest('#mobile-fs-toolbar') || e.target.tagName === 'BUTTON' || e.target.closest('#context-overlay')) return;
+
+            const now = Date.now();
+            const rect = readerDisplay.getBoundingClientRect();
+            const x = e.changedTouches[0].clientX - rect.left;
+            const y = e.changedTouches[0].clientY - rect.top;
+            const width = rect.width;
+            const height = rect.height;
+
+            let zone = 'center';
+            if (x < width * 0.25) zone = 'left';
+            else if (x > width * 0.75) zone = 'right';
+
+            // ZONA SEGURA CENTRAL: Solo 50% central de la altura
+            if (zone === 'center') {
+                const yRatio = y / height;
+                if (yRatio < 0.25 || yRatio > 0.75) return; 
+            }
+
+            if (now - lastTapTime < 400) tapCount++;
+            else tapCount = 1;
+            lastTapTime = now;
+
+            clearTimeout(tapTimeout);
+
+            if (tapCount === 1) {
+                tapTimeout = setTimeout(() => {
+                    if (zone === 'center') togglePlayPause();
+                    tapCount = 0;
+                }, 400);
+            } else if (tapCount === 2) {
+                if (zone === 'left') skipWords('left');
+                else if (zone === 'right') skipWords('right');
+                else togglePlayPause();
+            } else if (tapCount === 3) {
+                if (zone === 'left') { skipParagraphPrev(); tapCount = 0; }
+            }
+            e.preventDefault();
+        });
+
+        btnFullscreen.addEventListener('click', toggleFullscreen);
+        btnFsExit.addEventListener('click', toggleFullscreen);
+
+        async function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                try {
+                    await readerDisplay.requestFullscreen();
+                    document.body.classList.add('fullscreen-active');
+                    if (screen.orientation && screen.orientation.lock) {
+                        try { await screen.orientation.lock('landscape'); } catch (e) { console.warn(e); }
+                    }
+                } catch (err) { alert("Error: " + err.message); }
+            } else {
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+                document.exitFullscreen();
+                document.body.classList.remove('fullscreen-active');
+            }
+        }
+        
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.body.classList.remove('fullscreen-active');
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+            }
+        });
 
         function toggleContextView() {
             if (words.length === 0 && !initData()) return;
             isContextOpen = !isContextOpen;
+            
             if (isContextOpen) {
                 pauseReader();
                 contextOverlay.innerHTML = '<button class="close-ctx-btn">Cerrar X</button>';
                 contextOverlay.querySelector('.close-ctx-btn').onclick = toggleContextView;
+                
                 words.forEach((word, index) => {
-                    if (word === PARAGRAPH_TOKEN) { contextOverlay.appendChild(document.createElement('div')).className = 'ctx-break'; } 
-                    else {
-                        const span = document.createElement('span'); span.textContent = word + " "; span.className = 'ctx-word';
+                    if (word === PARAGRAPH_TOKEN) { 
+                        contextOverlay.appendChild(document.createElement('div')).className = 'ctx-break'; 
+                    } else {
+                        const span = document.createElement('span'); 
+                        span.textContent = word + " "; 
+                        span.className = 'ctx-word';
+                        
                         if (index === currentIndex || (index > 0 && index - 1 === currentIndex)) {
-                            span.classList.add('current'); setTimeout(() => span.scrollIntoView({block: "center"}), 50);
+                            span.classList.add('current'); 
+                            setTimeout(() => span.scrollIntoView({block: "center"}), 50);
                         }
-                        span.onclick = () => { currentIndex = index; renderWord(words[currentIndex]); toggleContextView(); };
+                        
+                        span.onclick = () => { 
+                            currentIndex = index; 
+                            renderWord(words[currentIndex]); 
+                            toggleContextView(); 
+                        };
                         contextOverlay.appendChild(span);
                     }
                 });
-                contextOverlay.classList.add('active'); document.body.style.overflow = 'hidden';
+                contextOverlay.classList.add('active');
             } else {
-                contextOverlay.classList.remove('active'); document.body.style.overflow = '';
+                contextOverlay.classList.remove('active');
             }
         }
 
-        readerDisplay.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
-        }, {passive: true});
-
-        readerDisplay.addEventListener('touchend', e => {
-            if (e.target.closest('#mobile-fs-toolbar')) return;
-            const diffX = e.changedTouches[0].screenX - touchStartX;
-            const diffY = e.changedTouches[0].screenY - touchStartY;
-            if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
-                diffX > 0 ? skipWords('left') : skipWords('right');
-            } else if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
-                 if (!e.target.closest('#toast')) togglePlayPause();
-            }
-        });
-        
         btnToggle.addEventListener('click', togglePlayPause);
         btnReset.addEventListener('click', resetReader);
         btnContext.addEventListener('click', toggleContextView);
-        btnFullscreen.addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : readerDisplay.requestFullscreen().catch(e=>console.log(e)));
-        wpmInput.addEventListener('change', updateFsWpmDisplay);
-        btnFsExit.addEventListener('click', (e) => { e.stopPropagation(); document.exitFullscreen(); });
-        btnFsSlower.addEventListener('click', (e) => { e.stopPropagation(); changeSpeed(-25); });
-        btnFsFaster.addEventListener('click', (e) => { e.stopPropagation(); changeSpeed(25); });
+        btnFsContext.addEventListener('click', toggleContextView);
 
     </script>
 </body>
