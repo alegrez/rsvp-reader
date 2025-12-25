@@ -1,4 +1,3 @@
-// Global Constants
 const PARAGRAPH_TOKEN = "___PB___";
 
 /**
@@ -33,6 +32,8 @@ function parseContent(rawText) {
  * Parses HTML string into RSVP word objects preserving formatting.
  */
 function parseHTMLToRSVP(htmlString) {
+    if (!htmlString || htmlString.trim().length === 0) return [];
+    
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
     let words = [];

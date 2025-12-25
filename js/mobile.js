@@ -1,4 +1,3 @@
-// --- State ---
 let words = [];
 let currentIndex = 0;
 let isPlaying = false;
@@ -8,8 +7,11 @@ let currentWpm = 300;
 let lastTapTime = 0;
 let tapCount = 0;
 let tapTimeout = null;
+let currentMode = 'text';
+let currentBookMeta = null;
+let currentBookTitle = "Unknown Title";
+let currentBookAuthor = "";
 
-// --- DOM Elements ---
 const inputText = document.getElementById('inputText');
 const wordOutput = document.getElementById('wordOutput');
 const btnToggle = document.getElementById('btnToggle');
@@ -26,12 +28,208 @@ const btnFsContext = document.getElementById('btnFsContext');
 const feedbackLeft = document.getElementById('feedbackLeft');
 const feedbackRight = document.getElementById('feedbackRight');
 
-window.addEventListener('DOMContentLoaded', () => { 
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+const epubInput = document.getElementById('epubInput');
+const chapterSelect = document.getElementById('chapterSelect');
+const epubControls = document.getElementById('epub-controls');
+const btnPrevChapter = document.getElementById('btnPrevChapter');
+const btnNextChapter = document.getElementById('btnNextChapter');
+const btnSyncPhrase = document.getElementById('btnSyncPhrase');
+const bookMetadata = document.getElementById('book-metadata');
+
+const resumeCard = document.getElementById('resume-card');
+const uploadCard = document.getElementById('upload-card');
+const resumeTitle = document.getElementById('resume-title');
+const resumeInfo = document.getElementById('resume-info');
+const btnResume = document.getElementById('btnResume');
+const btnDeleteBook = document.getElementById('btnDeleteBook');
+
+window.addEventListener('DOMContentLoaded', async () => { 
     renderWord("Ready", wordOutput); 
+    EpubBridge.init();
+
+    const settings = StorageService.getSettings();
+    if(settings.wpm) {
+        currentWpm = settings.wpm;
+    }
     updateDisplays();
+    
+    await checkSavedBook();
+});
+
+async function checkSavedBook() {
+    const meta = await StorageService.getProgress();
+    if (meta && meta.title) {
+        currentBookMeta = meta;
+        currentBookTitle = meta.title;
+        currentBookAuthor = meta.author;
+
+        resumeCard.style.display = 'block';
+        uploadCard.style.display = 'none';
+        
+        resumeTitle.textContent = meta.title;
+        resumeInfo.textContent = "Progress saved"; 
+    } else {
+        resumeCard.style.display = 'none';
+        uploadCard.style.display = 'block';
+    }
+}
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-content-${btn.dataset.target}`).classList.add('active');
+        currentMode = btn.dataset.target;
+        resetReader();
+    });
+});
+
+
+btnResume.addEventListener('click', async () => {
+    const fileBlob = await StorageService.loadBookFile();
+    if (fileBlob) {
+        showToast("Loading from storage...", toast);
+        EpubBridge.loadBook(fileBlob);
+    } else {
+        alert("Error: Book file not found.");
+        resetBookData();
+    }
+});
+
+btnDeleteBook.addEventListener('click', async () => {
+    if(confirm("Remove this book?")) {
+        await resetBookData();
+    }
+});
+
+async function resetBookData() {
+    await StorageService.clearBookData();
+    location.reload();
+}
+
+
+epubInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        showToast("Saving...", toast);
+        await StorageService.saveBookFile(file);
+
+        const reader = new FileReader();
+        reader.onload = (e) => EpubBridge.loadBook(e.target.result);
+        reader.readAsArrayBuffer(file);
+    }
+});
+
+EpubBridge.onMetadataReady = (title, author) => {
+    currentBookTitle = title || "Unknown Title";
+    currentBookAuthor = author || "";
+
+    bookMetadata.textContent = `${currentBookTitle}`;
+    bookMetadata.style.display = 'block';
+    
+    if (!currentBookMeta) {
+        saveCurrentState();
+    }
+};
+
+document.addEventListener('epubChaptersLoaded', (e) => {
+    const chapters = e.detail;
+    chapterSelect.innerHTML = "";
+    chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch.href;
+        opt.textContent = ch.label;
+        chapterSelect.appendChild(opt);
+    });
+
+    if (currentBookMeta && currentBookMeta.chapterHref) {
+        chapterSelect.value = currentBookMeta.chapterHref;
+        EpubBridge.loadChapter(currentBookMeta.chapterHref);
+    } else {
+        if(chapters.length > 0) EpubBridge.loadChapter(chapters[0].href);
+    }
+
+    resumeCard.style.display = 'none';
+    uploadCard.style.display = 'none';
+    epubControls.style.display = 'flex';
+});
+
+chapterSelect.addEventListener('change', (e) => {
+    pauseReader();
+    EpubBridge.loadChapter(e.target.value);
+});
+
+EpubBridge.onChapterReady = (htmlContent) => {
+    words = parseHTMLToRSVP(htmlContent);
+    
+    if (currentBookMeta && currentBookMeta.wordIndex > 0) {
+        currentIndex = Math.min(words.length - 1, currentBookMeta.wordIndex);
+        showToast(`Resumed at word ${currentIndex}`, toast);
+        currentBookMeta = null;
+    } else {
+        currentIndex = 0;
+        showToast("Chapter Loaded", toast);
+    }
+
+    if (words.length > 0) {
+        renderWord(words[currentIndex], wordOutput);
+    } else {
+        renderWord("Empty", wordOutput);
+        alert("This chapter seems empty. Try another one.");
+    }
+};
+
+function saveCurrentState() {
+    if (currentMode === 'epub' && EpubBridge.book) {
+        const href = chapterSelect.value;
+        StorageService.saveProgress(currentBookTitle, currentBookAuthor, href, currentIndex);
+    }
+    StorageService.saveSettings(currentWpm, currentMode);
+}
+
+window.addEventListener('beforeunload', () => {
+    saveCurrentState();
+});
+
+btnPrevChapter.addEventListener('click', () => {
+    const prev = EpubBridge.getPreviousChapter();
+    if (prev) {
+        chapterSelect.value = prev;
+        EpubBridge.loadChapter(prev);
+    }
+});
+
+btnNextChapter.addEventListener('click', () => {
+    const next = EpubBridge.getNextChapter();
+    if (next) {
+        chapterSelect.value = next;
+        EpubBridge.loadChapter(next);
+    }
+});
+
+btnSyncPhrase.addEventListener('click', () => {
+    const phrase = prompt("Find phrase (3+ words):");
+    if (phrase) {
+        const idx = EpubBridge.findPhraseIndex(words, phrase);
+        if (idx !== -1) {
+            currentIndex = idx;
+            renderWord(words[currentIndex], wordOutput);
+            showToast("Synced!", toast);
+        } else {
+            alert("Not found in chapter.");
+        }
+    }
 });
 
 function initData() {
+    if (currentMode === 'epub') {
+        if (words.length > 0) return true;
+        alert("Load an EPUB first.");
+        return false;
+    }
     const rawText = inputText.value.trim();
     if (!rawText) { alert("Please enter some text."); return false; }
     words = parseContent(rawText);
@@ -61,7 +259,11 @@ function startReader() {
 
 function loopReader() {
     if (!isPlaying) return;
-    if (currentIndex >= words.length) { pauseReader(); currentIndex = 0; return; }
+    if (currentIndex >= words.length) { 
+        pauseReader(); 
+        currentIndex = 0; 
+        return; 
+    }
 
     const currentWordObj = words[currentIndex];
     renderWord(currentWordObj, wordOutput);
@@ -84,7 +286,10 @@ function loopReader() {
 }
 
 function pauseReader() {
-    isPlaying = false; clearTimeout(timerOut); btnToggle.textContent = "Continue";
+    isPlaying = false; 
+    clearTimeout(timerOut); 
+    btnToggle.textContent = "Continue";
+    saveCurrentState();
 }
 
 function togglePlayPause() {
@@ -93,7 +298,8 @@ function togglePlayPause() {
 }
 
 function resetReader() {
-    pauseReader(); currentIndex = 0; words = []; 
+    pauseReader(); currentIndex = 0; 
+    if (currentMode === 'text') words = []; 
     btnToggle.textContent = "Start"; renderWord("Ready", wordOutput);
 }
 

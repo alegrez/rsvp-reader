@@ -158,3 +158,60 @@ button:active { transform: scale(0.96); }
 }
 
 .controls-info { font-size: 0.85rem; color: #666; margin-top: 15px; text-align: center; }
+
+.mode-tabs {
+    display: flex;
+    width: 100%;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ddd;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    color: #666;
+    border: none;
+    border-radius: 10px 10px 0 0;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+.tab-btn.active {
+    background: white;
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.small-btn {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    background-color: var(--secondary-color);
+}
+
+.file-upload-container {
+    background: white;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    border: 2px dashed #ddd;
+}
+
+select {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

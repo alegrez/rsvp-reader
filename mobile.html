@@ -24,8 +24,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://alegrez.github.io/rsvp-reader/mobile.html">
 
-    <link rel="stylesheet" href="css/style.css?v=1766623805">
-    <link rel="stylesheet" href="css/mobile.css?v=1766623805">
+    <link rel="stylesheet" href="css/style.css?v=1766681783">
+    <link rel="stylesheet" href="css/mobile.css?v=1766681783">
 </head>
 <body>
 
@@ -44,7 +44,51 @@
     </p>
 
     <div class="main-container">
-        <textarea id="inputText" placeholder="Paste your text here."></textarea>
+        
+        <div class="mode-tabs">
+            <button class="tab-btn active" data-target="text">Text</button>
+            <button class="tab-btn" data-target="epub">eBook</button>
+        </div>
+
+        <div id="tab-content-text" class="tab-content active">
+            <textarea id="inputText" placeholder="Paste your text here."></textarea>
+        </div>
+
+        <div id="tab-content-epub" class="tab-content">
+    
+            <div id="resume-card" style="display:none; background: #e9ecef; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                <p style="margin: 0 0 10px; color: #666; font-size: 0.9rem;">Continue reading:</p>
+                <h3 id="resume-title" style="margin: 0 0 5px; color: var(--secondary-color);">Book Title</h3>
+                <p id="resume-info" style="margin: 0 0 15px; font-size: 0.9rem;">Chapter X</p>
+                
+                <button id="btnResume" style="width:100%; max-width: 250px; background-color: var(--primary-color); margin-bottom: 10px;">
+                    📖 Open Book
+                </button>
+                <div style="margin-top: 10px;">
+                    <button id="btnDeleteBook" style="background: transparent; color: #e76f51; border: 1px solid #e76f51; padding: 5px 10px; font-size: 0.8rem;">
+                        🗑 Remove & Upload New
+                    </button>
+                </div>
+            </div>
+
+            <div id="upload-card" class="file-upload-container">
+                <p style="margin-bottom: 10px; font-weight: bold;">Upload an .epub file</p>
+                <input type="file" id="epubInput" accept=".epub">
+            </div>
+            
+            <div id="book-metadata" style="display:none; margin-top: 10px; font-weight: bold; color: var(--secondary-color);"></div>
+
+            <div id="epub-controls" class="controls-container" style="display:none; margin-top: 10px; background: #f8f9fa;">
+                <div class="control-group" style="width: 100%;">
+                    <select id="chapterSelect" style="flex: 1; padding: 5px;"></select>
+                </div>
+                <div class="control-group" style="width: 100%; justify-content: space-between;">
+                    <button id="btnPrevChapter" class="small-btn">◀ Prev</button>
+                    <button id="btnSyncPhrase" class="small-btn" style="background-color: #457b9d;">🔍 Find</button>
+                    <button id="btnNextChapter" class="small-btn">Next ▶</button>
+                </div>
+            </div>
+        </div>
         
         <div class="controls-card">
             <div class="wpm-stepper">
@@ -67,7 +111,7 @@
 
     <div id="reader-display">
         <div class="word-container" id="wordOutput"></div>
-        
+
         <div class="tap-feedback left" id="feedbackLeft">⏪</div>
         <div class="tap-feedback right" id="feedbackRight">⏩</div>
 
@@ -84,7 +128,7 @@
                 <button id="btnFsExit" class="fs-icon-btn fs-exit-btn">✖</button>
             </div>
         </div>
-
+        
         <div id="context-overlay"></div>
     </div>
     
@@ -93,7 +137,13 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+    
     <script src="js/rsvp-core.js"></script>
+    <script src="js/epub-bridge.js"></script>
+    <script src="js/storage.js"></script>
     <script src="js/mobile.js"></script>
 </body>
 </html>
