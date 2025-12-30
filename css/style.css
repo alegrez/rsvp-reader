@@ -282,10 +282,25 @@ select {
 }
 
 .settings-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    min-height: 40px;
 }
-.settings-header h2 { margin: 0; font-size: 1.2rem; color: var(--secondary-color); }
+
+.settings-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--secondary-color);
+    text-align: center;
+    width: 100%;
+    padding-right: 40px; 
+    padding-left: 40px;
+}
 
 .setting-item { margin-bottom: 15px; }
 .setting-item label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; color: #555; }
@@ -295,8 +310,24 @@ select {
 }
 
 .close-settings-btn {
-    background: transparent; color: #666; font-size: 1.5rem; padding: 0;
-    line-height: 1; border: none; width: auto;
+    position: absolute;
+    right: 0;
+    top: 0;
+    
+    flex: none !important; 
+    width: 40px !important; 
+    height: 40px !important;
+    
+    background: transparent;
+    color: #666;
+    font-size: 1.8rem;
+    line-height: 1;
+    border: none;
+    padding: 0;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
 }
 
