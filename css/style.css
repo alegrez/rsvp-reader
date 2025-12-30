@@ -306,3 +306,55 @@ select {
 }
 
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.library-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.library-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    transition: background 0.2s;
+}
+
+.library-item:last-child { border-bottom: none; }
+.library-item:hover { background: #f9f9f9; }
+
+.lib-info { flex: 1; padding-right: 10px; text-align: left; }
+.lib-title { font-weight: bold; font-size: 1rem; color: #333; margin: 0; }
+.lib-author { font-size: 0.85rem; color: #777; margin: 2px 0 0; }
+.lib-meta { font-size: 0.75rem; color: var(--primary-color); margin-top: 4px; }
+
+.lib-actions { display: flex; gap: 8px; }
+
+.btn-lib-open {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+
+.btn-lib-del {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    background-color: transparent;
+    color: #e76f51;
+    border: 1px solid #e76f51;
+    border-radius: 4px;
+}
+.btn-lib-del:hover { background-color: #ffebe6; }
+
+.empty-lib-msg {
+    padding: 30px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}

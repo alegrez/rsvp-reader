@@ -4,7 +4,7 @@ let isPlaying = false;
 let timerOut = null;
 let isContextOpen = false;
 let currentMode = 'text';
-let currentBookMeta = null;
+let currentBookId = null;
 let currentBookTitle = "Unknown Title";
 let currentBookAuthor = "";
 let isResetting = false;
@@ -35,7 +35,8 @@ const uploadCard = document.getElementById('upload-card');
 const resumeTitle = document.getElementById('resume-title');
 const resumeInfo = document.getElementById('resume-info');
 const btnResume = document.getElementById('btnResume');
-const btnDeleteBook = document.getElementById('btnDeleteBook');
+const btnOpenLibrary = document.getElementById('btnOpenLibrary');
+const btnUploadNew = document.getElementById('btnUploadNew');
 
 const btnSettings = document.getElementById('btnSettings');
 const settingsOverlay = document.getElementById('settings-overlay');
@@ -43,6 +44,12 @@ const btnCloseSettings = document.getElementById('btnCloseSettings');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
 const fontSelect = document.getElementById('fontSelect');
 const btnFactoryReset = document.getElementById('btnFactoryReset');
+
+const libraryOverlay = document.getElementById('library-overlay');
+const btnCloseLibrary = document.getElementById('btnCloseLibrary');
+const libraryList = document.getElementById('library-list');
+const btnUploadFromLib = document.getElementById('btnUploadFromLib');
+const btnLibraryFromControls = document.getElementById('btnLibraryFromControls');
 
 const fontMap = {
     'classic': "'Courier New', Courier, monospace",
@@ -55,9 +62,9 @@ const fontMap = {
 function applySettings(settings) {
     const fontKey = settings.font || 'classic'; 
     const fontFamily = fontMap[fontKey];
-    
+
     document.documentElement.style.setProperty('--font-family', fontFamily);
-    
+
     if(fontSelect) fontSelect.value = fontKey;
 }
 
@@ -70,115 +77,136 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     applySettings(settings);
     
-    await checkSavedBook();
+    await checkLastReadBook();
 });
 
-if(btnSettings) {
-    btnSettings.addEventListener('click', () => {
-        settingsOverlay.classList.add('active');
-        if(isPlaying) togglePlayPause();
-    });
-}
-
-function closeSettings() {
-    settingsOverlay.classList.remove('active');
-}
-
-if(btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettings);
-if(btnSaveSettings) btnSaveSettings.addEventListener('click', closeSettings);
-
-if(fontSelect) {
-    fontSelect.addEventListener('change', (e) => {
-        const newFont = e.target.value;
-        
-        const currentWpmVal = parseInt(wpmInput.value) || 300;
-        
-        StorageService.saveSettings(currentWpmVal, currentMode, newFont);
-        
-        document.documentElement.style.setProperty('--font-family', fontMap[newFont]);
-    });
-}
-
-if(btnFactoryReset) {
-    btnFactoryReset.addEventListener('click', () => {
-        if(confirm("Are you sure you want to reset all settings to default?")) {
-            isResetting = true;
-            StorageService.clearSettings();
-            location.reload();
-        }
-    });
-}
-
-settingsOverlay.addEventListener('click', (e) => {
-    if (e.target === settingsOverlay) closeSettings();
-});
-
-
-async function checkSavedBook() {
-    const meta = await StorageService.getProgress();
-    if (meta && meta.title) {
-        currentBookMeta = meta;
-        
-        currentBookTitle = meta.title;
-        currentBookAuthor = meta.author;
+async function checkLastReadBook() {
+    const book = await StorageService.getLastReadBook();
+    if (book) {
+        currentBookId = book.id;
+        currentBookTitle = book.title;
+        currentBookAuthor = book.author;
         
         resumeCard.style.display = 'block';
         uploadCard.style.display = 'none';
         
-        resumeTitle.textContent = meta.title;
-        resumeInfo.textContent = `Progress saved`; 
+        resumeTitle.textContent = book.title;
+        resumeInfo.textContent = "Progress saved"; 
     } else {
         resumeCard.style.display = 'none';
         uploadCard.style.display = 'block';
     }
 }
 
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(`tab-content-${btn.dataset.target}`).classList.add('active');
-        currentMode = btn.dataset.target;
-        resetReader();
-    });
-});
+async function renderLibraryList() {
+    const books = await StorageService.getLibrary();
+    libraryList.innerHTML = "";
 
-btnResume.addEventListener('click', async () => {
-    const fileBlob = await StorageService.loadBookFile();
+    if (books.length === 0) {
+        libraryList.innerHTML = '<div class="empty-lib-msg">No books yet. Upload one!</div>';
+        return;
+    }
+
+    books.forEach(book => {
+        const item = document.createElement('div');
+        item.className = 'library-item';
+        
+        const date = new Date(book.lastRead).toLocaleDateString();
+
+        item.innerHTML = `
+            <div class="lib-info">
+                <h4 class="lib-title">${book.title}</h4>
+                <p class="lib-author">${book.author}</p>
+                <div class="lib-meta">Last read: ${date}</div>
+            </div>
+            <div class="lib-actions">
+                <button class="btn-lib-open" data-id="${book.id}">Open</button>
+                <button class="btn-lib-del" data-id="${book.id}">🗑</button>
+            </div>
+        `;
+        libraryList.appendChild(item);
+    });
+
+    libraryList.querySelectorAll('.btn-lib-open').forEach(btn => {
+        btn.onclick = () => loadBookFromLibrary(btn.dataset.id);
+    });
+    libraryList.querySelectorAll('.btn-lib-del').forEach(btn => {
+        btn.onclick = () => deleteBookFromLibrary(btn.dataset.id);
+    });
+}
+
+async function loadBookFromLibrary(bookId) {
+    libraryOverlay.classList.remove('active');
+    
+    const fileBlob = await StorageService.loadBookFile(bookId);
     if (fileBlob) {
-        showToast("Loading book from storage...", toast);
+        currentBookId = bookId;
+        showToast("Loading book...", toast);
         EpubBridge.loadBook(fileBlob);
     } else {
-        alert("Error: Book file not found in storage.");
-        resetBookData();
+        alert("Error loading book data.");
     }
-});
-
-btnDeleteBook.addEventListener('click', async () => {
-    if(confirm("Remove this book and progress?")) {
-        await resetBookData();
-    }
-});
-
-async function resetBookData() {
-    await StorageService.clearBookData();
-    location.reload();
 }
+
+async function deleteBookFromLibrary(bookId) {
+    if(confirm("Delete this book?")) {
+        await StorageService.deleteBook(bookId);
+        await renderLibraryList();
+        
+        if (currentBookId === bookId) {
+            currentBookId = null;
+            checkLastReadBook();
+            resetReader();
+            bookMetadata.style.display = 'none';
+            epubControls.style.display = 'none';
+        }
+    }
+}
+
+btnResume.addEventListener('click', () => {
+    if (currentBookId) loadBookFromLibrary(currentBookId);
+});
+
+btnOpenLibrary.addEventListener('click', () => {
+    renderLibraryList();
+    libraryOverlay.classList.add('active');
+});
+
+if (btnLibraryFromControls) {
+    btnLibraryFromControls.addEventListener('click', () => {
+        if (isPlaying) pauseReader();
+        renderLibraryList();
+        libraryOverlay.classList.add('active');
+    });
+}
+
+btnUploadNew.addEventListener('click', () => {
+    resumeCard.style.display = 'none';
+    uploadCard.style.display = 'block';
+});
+
+btnCloseLibrary.addEventListener('click', () => libraryOverlay.classList.remove('active'));
+btnUploadFromLib.addEventListener('click', () => {
+    libraryOverlay.classList.remove('active');
+    resumeCard.style.display = 'none';
+    uploadCard.style.display = 'block';
+    document.querySelector('.tab-btn[data-target="epub"]').click();
+});
 
 epubInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (file) {
-        showToast("Processing & Saving...", toast);
-        await StorageService.saveBookFile(file);
+        showToast("Processing...", toast);
         
         const reader = new FileReader();
         reader.onload = (e) => EpubBridge.loadBook(e.target.result);
         reader.readAsArrayBuffer(file);
+        
+        window.tempUploadFile = file;
     }
 });
 
-EpubBridge.onMetadataReady = (title, author) => {
+EpubBridge.onMetadataReady = async (title, author) => {
     currentBookTitle = title || "Unknown Title";
     currentBookAuthor = author || "";
 
@@ -186,8 +214,27 @@ EpubBridge.onMetadataReady = (title, author) => {
     bookMetadata.style.display = 'block';
     epubControls.style.display = 'flex';
 
-    saveCurrentState();
+    if (window.tempUploadFile) {
+        const newBook = await StorageService.addBook(window.tempUploadFile, currentBookTitle, currentBookAuthor);
+        currentBookId = newBook.id;
+        window.tempUploadFile = null;
+        showToast("Book Saved to Library", toast);
+    }
+    
+    const library = await StorageService.getLibrary();
+    const bookData = library.find(b => b.id === currentBookId);
 };
+
+function saveCurrentState() {
+    if (currentMode === 'epub' && currentBookId && EpubBridge.book) {
+        const href = chapterSelect.value;
+        StorageService.saveProgress(currentBookId, href, currentIndex);
+    }
+    
+    const currentFont = fontSelect ? fontSelect.value : 'classic';
+    const wpm = parseInt(wpmInput.value) || 300;
+    StorageService.saveSettings(wpm, currentMode, currentFont);
+}
 
 document.addEventListener('epubChaptersLoaded', (e) => {
     const chapters = e.detail;
@@ -199,37 +246,34 @@ document.addEventListener('epubChaptersLoaded', (e) => {
         chapterSelect.appendChild(opt);
     });
 
-    if (currentBookMeta && currentBookMeta.chapterHref) {
-        chapterSelect.value = currentBookMeta.chapterHref;
-        EpubBridge.loadChapter(currentBookMeta.chapterHref);
-    } else {
-        if(chapters.length > 0) EpubBridge.loadChapter(chapters[0].href);
-    }
+    StorageService.getLibrary().then(lib => {
+        const book = lib.find(b => b.id === currentBookId);
+        if (book && book.chapterHref) {
+            chapterSelect.value = book.chapterHref;
+            EpubBridge.loadChapter(book.chapterHref);
+            window.tempWordIndex = book.wordIndex; 
+        } else {
+            if(chapters.length > 0) EpubBridge.loadChapter(chapters[0].href);
+        }
+    });
     
     resumeCard.style.display = 'none';
     uploadCard.style.display = 'none';
     epubControls.style.display = 'flex';
 });
 
-chapterSelect.addEventListener('change', (e) => {
-    pauseReader();
-    EpubBridge.loadChapter(e.target.value);
-});
-
-window.addEventListener('beforeunload', () => {
-    if (!isResetting) {
-        saveCurrentState();
-    }
-});
-
 EpubBridge.onChapterReady = (htmlContent) => {
     words = parseHTMLToRSVP(htmlContent);
     
-    if (currentBookMeta && currentBookMeta.wordIndex > 0) {
-        currentIndex = Math.min(words.length - 1, currentBookMeta.wordIndex);
+    let targetIndex = 0;
+    if (window.tempWordIndex !== undefined) {
+        targetIndex = window.tempWordIndex;
+        window.tempWordIndex = undefined;
+    }
+
+    if (targetIndex > 0) {
+        currentIndex = Math.min(words.length - 1, targetIndex);
         showToast(`Resumed at word ${currentIndex}`, toast);
-        
-        currentBookMeta = null; 
     } else {
         currentIndex = 0;
         showToast("Chapter Loaded", toast);
@@ -242,44 +286,69 @@ EpubBridge.onChapterReady = (htmlContent) => {
     }
 };
 
-function saveCurrentState() {
-    if (currentMode === 'epub' && EpubBridge.book) {
-        const href = chapterSelect.value;
-        StorageService.saveProgress(currentBookTitle, currentBookAuthor, href, currentIndex);
-    }
-   
-    const currentFont = fontSelect ? fontSelect.value : 'system';
-    const wpm = parseInt(wpmInput.value) || 300;
-    StorageService.saveSettings(wpm, currentMode, currentFont);
+if(btnSettings) {
+    btnSettings.addEventListener('click', () => {
+        settingsOverlay.classList.add('active');
+        if(isPlaying) togglePlayPause();
+    });
 }
+function closeSettings() { settingsOverlay.classList.remove('active'); }
+if(btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettings);
+if(btnSaveSettings) btnSaveSettings.addEventListener('click', closeSettings);
+if(fontSelect) {
+    fontSelect.addEventListener('change', (e) => {
+        const newFont = e.target.value;
+        const currentWpmVal = parseInt(wpmInput.value) || 300;
+        StorageService.saveSettings(currentWpmVal, currentMode, newFont);
+        document.documentElement.style.setProperty('--font-family', fontMap[newFont]);
+    });
+}
+if(btnFactoryReset) {
+    btnFactoryReset.addEventListener('click', () => {
+        if(confirm("Reset all settings?")) {
+            isResetting = true;
+            StorageService.clearSettings();
+            location.reload();
+        }
+    });
+}
+settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) closeSettings(); });
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-content-${btn.dataset.target}`).classList.add('active');
+        currentMode = btn.dataset.target;
+        resetReader();
+    });
+});
+
+chapterSelect.addEventListener('change', (e) => {
+    pauseReader();
+    EpubBridge.loadChapter(e.target.value);
+});
+
+window.addEventListener('beforeunload', () => {
+    if (!isResetting) saveCurrentState();
+});
 
 btnPrevChapter.addEventListener('click', () => {
     const prev = EpubBridge.getPreviousChapter();
-    if (prev) {
-        chapterSelect.value = prev;
-        EpubBridge.loadChapter(prev);
-    }
+    if (prev) { chapterSelect.value = prev; EpubBridge.loadChapter(prev); }
 });
-
 btnNextChapter.addEventListener('click', () => {
     const next = EpubBridge.getNextChapter();
-    if (next) {
-        chapterSelect.value = next;
-        EpubBridge.loadChapter(next);
-    }
+    if (next) { chapterSelect.value = next; EpubBridge.loadChapter(next); }
 });
-
 btnSyncPhrase.addEventListener('click', () => {
-    const phrase = prompt("Enter the last 3-4 words you read:");
+    const phrase = prompt("Enter phrase to find:");
     if (phrase) {
         const idx = EpubBridge.findPhraseIndex(words, phrase);
         if (idx !== -1) {
-            currentIndex = idx;
-            renderWord(words[currentIndex], wordOutput);
-            showToast("Synced!", toast);
-        } else {
-            alert("Phrase not found in this chapter.");
-        }
+            currentIndex = idx; renderWord(words[currentIndex], wordOutput); showToast("Synced!", toast);
+        } else { alert("Phrase not found."); }
     }
 });
 
@@ -298,144 +367,100 @@ function initData() {
 function startReader() {
     if (words.length === 0) { if (!initData()) return; }
     if (currentIndex >= words.length) currentIndex = 0;
-    isPlaying = true;
-    btnToggle.textContent = "Pause";
+    isPlaying = true; btnToggle.textContent = "Pause";
     if (isContextOpen) toggleContextView();
     loopReader();
 }
 
 function loopReader() {
     if (!isPlaying) return;
-    if (currentIndex >= words.length) { 
-        pauseReader(); 
-        currentIndex = 0; 
-        return; 
-    }
-
+    if (currentIndex >= words.length) { pauseReader(); currentIndex = 0; return; }
     const currentWordObj = words[currentIndex];
     renderWord(currentWordObj, wordOutput);
-
     const wpm = parseInt(wpmInput.value) || 300;
-    const baseDelay = 60000 / wpm;
-    let finalDelay = baseDelay;
-
-    if (currentWordObj.type === 'break') {
-        finalDelay = baseDelay * 4.0;
-    } else {
+    let finalDelay = 60000 / wpm;
+    if (currentWordObj.type === 'break') { finalDelay *= 4.0; } 
+    else {
         const text = currentWordObj.text;
         const len = text.length;
         const lastChar = text.slice(-1);
-        
-        if (',;'.includes(lastChar)) {
-            finalDelay = baseDelay * 2.0; 
-        } else if ('.?!:”。'.includes(lastChar)) {
-            finalDelay = baseDelay * 3.0;
-        }
-
-        if (len > 10) {
-            finalDelay = finalDelay * 1.4; 
-        }
+        if (',;'.includes(lastChar)) finalDelay *= 2.0;
+        else if ('.?!:”。'.includes(lastChar)) finalDelay *= 3.0;
+        if (len > 10) finalDelay *= 1.4;
     }
-
     currentIndex++;
     timerOut = setTimeout(loopReader, finalDelay);
 }
 
 function pauseReader() {
-    isPlaying = false; 
-    clearTimeout(timerOut); 
-    btnToggle.textContent = "Continue";
-    saveCurrentState();
+    isPlaying = false; clearTimeout(timerOut); btnToggle.textContent = "Continue"; saveCurrentState();
 }
-
 function togglePlayPause() {
     if (isContextOpen) { toggleContextView(); startReader(); }
     else { isPlaying ? pauseReader() : startReader(); }
 }
-
 function resetReader() {
     pauseReader(); currentIndex = 0; 
     if(currentMode === 'text') words = []; 
     btnToggle.textContent = "Start"; renderWord("Ready", wordOutput);
 }
-
 function changeSpeed(delta) {
     let current = parseInt(wpmInput.value) || 300;
     let newVal = current + delta;
-    if (newVal < 60) newVal = 60; 
-    wpmInput.value = newVal; 
+    if (newVal < 60) newVal = 60;
+    wpmInput.value = newVal;
     showToast(`Speed: ${newVal} WPM`, toast);
 }
 
 function skipWords(direction) {
     if (words.length === 0) return;
     const wpm = parseInt(wpmInput.value) || 300;
-    const jumpSize = Math.max(5, Math.floor((wpm / 60) * 2)); 
+    const jumpSize = Math.max(5, Math.floor((wpm / 60) * 2));
     const delta = direction === 'left' ? -jumpSize : jumpSize;
     let newIndex = currentIndex + delta;
-    if (newIndex < 0) newIndex = 0; 
+    if (newIndex < 0) newIndex = 0;
     if (newIndex >= words.length) newIndex = words.length - 1;
-    currentIndex = newIndex; 
-    renderWord(words[currentIndex], wordOutput); 
+    currentIndex = newIndex;
+    renderWord(words[currentIndex], wordOutput);
     showToast(direction === 'left' ? `⏪ ${jumpSize}` : `⏩ ${jumpSize}`, toast);
 }
-
 function skipParagraph(direction) {
     if (words.length === 0) return;
     let newIndex = currentIndex;
-    
     if (direction === 'prev') {
-        newIndex = Math.max(0, newIndex - 2); 
+        newIndex = Math.max(0, newIndex - 2);
         while (newIndex > 0 && words[newIndex].type !== 'break') newIndex--;
         if (words[newIndex].type === 'break') newIndex++;
     } else {
         while (newIndex < words.length && words[newIndex].type !== 'break') newIndex++;
         if (newIndex < words.length) newIndex++;
     }
-    
-    if (newIndex >= words.length) newIndex = words.length - 1; 
-    if (newIndex < 0) newIndex = 0;
-    currentIndex = newIndex; 
-    renderWord(words[currentIndex], wordOutput); 
-    showToast(direction === 'prev' ? "Prev Paragraph Start" : "Next Paragraph Start", toast);
-}
 
+    if (newIndex >= words.length) newIndex = words.length - 1;
+    if (newIndex < 0) newIndex = 0;
+    currentIndex = newIndex;
+    renderWord(words[currentIndex], wordOutput);
+    showToast(direction === 'prev' ? "Prev Paragraph" : "Next Paragraph", toast);
+}
 function toggleContextView() {
     if (words.length === 0) { if (!initData()) return; }
     isContextOpen = !isContextOpen;
     if (isContextOpen) {
         pauseReader(); contextOverlay.innerHTML = '';
-
         words.forEach((wordObj, index) => {
             if (wordObj.type === 'break') {
-                const br = document.createElement('div'); br.className = 'ctx-break'; 
-                contextOverlay.appendChild(br);
+                const br = document.createElement('div'); br.className = 'ctx-break'; contextOverlay.appendChild(br);
             } else {
-                const span = document.createElement('span'); 
-                span.textContent = wordObj.text + " "; span.className = 'ctx-word';
-                
+                const span = document.createElement('span'); span.textContent = wordObj.text + " "; span.className = 'ctx-word';
                 if (wordObj.bold) span.style.fontWeight = 'bold';
                 if (wordObj.italic) span.style.fontStyle = 'italic';
                 if (wordObj.header) { 
-                    span.style.fontWeight = 'bold'; 
-                    span.style.color = '#2a9d8f';
-                    span.style.display = 'inline-block';
-                    
-                    if (wordObj.headerLevel === 1) { 
-                        span.style.fontSize = '1.6em'; span.style.color = '#e76f51'; span.style.marginTop = '10px';
-                    } else if (wordObj.headerLevel === 2) {
-                        span.style.fontSize = '1.3em'; span.style.marginTop = '8px';
-                    }
+                    span.style.fontWeight = 'bold'; span.style.color = '#2a9d8f'; span.style.display = 'inline-block';
+                    if (wordObj.headerLevel === 1) { span.style.fontSize = '1.6em'; span.style.color = '#e76f51'; span.style.marginTop = '10px'; }
+                    else if (wordObj.headerLevel === 2) { span.style.fontSize = '1.3em'; span.style.marginTop = '8px'; }
                 }
-
-                if (index === currentIndex - 1 && currentIndex > 0) {
-                    span.classList.add('current'); 
-                    setTimeout(() => span.scrollIntoView({block: "center", behavior: "smooth"}), 50);
-                }
-                span.onclick = () => { 
-                    currentIndex = index; renderWord(words[currentIndex], wordOutput); 
-                    showToast("Jump to position", toast); toggleContextView(); 
-                };
+                if (index === currentIndex - 1 && currentIndex > 0) { span.classList.add('current'); setTimeout(() => span.scrollIntoView({block: "center", behavior: "smooth"}), 50); }
+                span.onclick = () => { currentIndex = index; renderWord(words[currentIndex], wordOutput); showToast("Jump", toast); toggleContextView(); };
                 contextOverlay.appendChild(span);
             }
         });

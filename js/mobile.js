@@ -8,7 +8,7 @@ let lastTapTime = 0;
 let tapCount = 0;
 let tapTimeout = null;
 let currentMode = 'text';
-let currentBookMeta = null;
+let currentBookId = null;
 let currentBookTitle = "Unknown Title";
 let currentBookAuthor = "";
 let isResetting = false;
@@ -45,6 +45,8 @@ const resumeTitle = document.getElementById('resume-title');
 const resumeInfo = document.getElementById('resume-info');
 const btnResume = document.getElementById('btnResume');
 const btnDeleteBook = document.getElementById('btnDeleteBook');
+const btnOpenLibrary = document.getElementById('btnOpenLibrary');
+const btnUploadNew = document.getElementById('btnUploadNew');
 
 const btnSettings = document.getElementById('btnSettings');
 const settingsOverlay = document.getElementById('settings-overlay');
@@ -52,6 +54,12 @@ const btnCloseSettings = document.getElementById('btnCloseSettings');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
 const fontSelect = document.getElementById('fontSelect');
 const btnFactoryReset = document.getElementById('btnFactoryReset');
+
+const libraryOverlay = document.getElementById('library-overlay');
+const btnCloseLibrary = document.getElementById('btnCloseLibrary');
+const libraryList = document.getElementById('library-list');
+const btnUploadFromLib = document.getElementById('btnUploadFromLib');
+const btnLibraryFromControls = document.getElementById('btnLibraryFromControls');
 
 const fontMap = {
     'classic': "'Courier New', Courier, monospace",
@@ -81,7 +89,121 @@ window.addEventListener('DOMContentLoaded', async () => {
     updateDisplays();
     applySettings(settings);
     
-    await checkSavedBook();
+    await checkLastReadBook();
+});
+
+
+async function checkLastReadBook() {
+    const book = await StorageService.getLastReadBook();
+    if (book) {
+        currentBookId = book.id;
+        currentBookTitle = book.title;
+        currentBookAuthor = book.author;
+
+        resumeCard.style.display = 'block';
+        uploadCard.style.display = 'none';
+        
+        resumeTitle.textContent = book.title;
+        resumeInfo.textContent = "Progress saved"; 
+    } else {
+        resumeCard.style.display = 'none';
+        uploadCard.style.display = 'block';
+    }
+}
+
+async function renderLibraryList() {
+    const books = await StorageService.getLibrary();
+    libraryList.innerHTML = "";
+
+    if (books.length === 0) {
+        libraryList.innerHTML = '<div class="empty-lib-msg">No books yet. Upload one!</div>';
+        return;
+    }
+
+    books.forEach(book => {
+        const item = document.createElement('div');
+        item.className = 'library-item';
+        const date = new Date(book.lastRead).toLocaleDateString();
+
+        item.innerHTML = `
+            <div class="lib-info">
+                <h4 class="lib-title">${book.title}</h4>
+                <p class="lib-author">${book.author}</p>
+                <div class="lib-meta">Last read: ${date}</div>
+            </div>
+            <div class="lib-actions">
+                <button class="btn-lib-open" data-id="${book.id}">Open</button>
+                <button class="btn-lib-del" data-id="${book.id}">🗑</button>
+            </div>
+        `;
+        libraryList.appendChild(item);
+    });
+
+    libraryList.querySelectorAll('.btn-lib-open').forEach(btn => {
+        btn.onclick = () => loadBookFromLibrary(btn.dataset.id);
+    });
+    libraryList.querySelectorAll('.btn-lib-del').forEach(btn => {
+        btn.onclick = () => deleteBookFromLibrary(btn.dataset.id);
+    });
+}
+
+async function loadBookFromLibrary(bookId) {
+    libraryOverlay.classList.remove('active');
+    
+    const fileBlob = await StorageService.loadBookFile(bookId);
+    if (fileBlob) {
+        currentBookId = bookId;
+        showToast("Loading book...", toast);
+        EpubBridge.loadBook(fileBlob);
+    } else {
+        alert("Error loading book data.");
+    }
+}
+
+async function deleteBookFromLibrary(bookId) {
+    if(confirm("Delete this book?")) {
+        await StorageService.deleteBook(bookId);
+        await renderLibraryList();
+        
+        if (currentBookId === bookId) {
+            currentBookId = null;
+            checkLastReadBook();
+            resetReader();
+            bookMetadata.style.display = 'none';
+            epubControls.style.display = 'none';
+        }
+    }
+}
+
+
+btnResume.addEventListener('click', async () => {
+    if (currentBookId) loadBookFromLibrary(currentBookId);
+});
+
+btnOpenLibrary.addEventListener('click', () => {
+    renderLibraryList();
+    libraryOverlay.classList.add('active');
+});
+
+if (btnLibraryFromControls) {
+    btnLibraryFromControls.addEventListener('click', () => {
+        if (isPlaying) pauseReader();
+        renderLibraryList();
+        libraryOverlay.classList.add('active');
+    });
+}
+
+btnUploadNew.addEventListener('click', () => {
+    resumeCard.style.display = 'none';
+    uploadCard.style.display = 'block';
+});
+
+btnCloseLibrary.addEventListener('click', () => libraryOverlay.classList.remove('active'));
+btnUploadFromLib.addEventListener('click', () => {
+    libraryOverlay.classList.remove('active');
+    resumeCard.style.display = 'none';
+    uploadCard.style.display = 'block';
+    document.querySelector('.tab-btn[data-target="epub"]').click();
 });
 
 if(btnSettings) {
@@ -90,114 +212,58 @@ if(btnSettings) {
         if(isPlaying) togglePlayPause();
     });
 }
-
-function closeSettings() {
-    settingsOverlay.classList.remove('active');
-}
-
+function closeSettings() { settingsOverlay.classList.remove('active'); }
 if(btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettings);
 if(btnSaveSettings) btnSaveSettings.addEventListener('click', closeSettings);
 
 if(fontSelect) {
     fontSelect.addEventListener('change', (e) => {
         const newFont = e.target.value;
-        
         StorageService.saveSettings(currentWpm, currentMode, newFont);
-        
         document.documentElement.style.setProperty('--font-family', fontMap[newFont]);
     });
 }
 
 if(btnFactoryReset) {
     btnFactoryReset.addEventListener('click', () => {
-        if(confirm("Are you sure you want to reset all settings to default?")) {
+        if(confirm("Reset all settings?")) {
             isResetting = true;
             StorageService.clearSettings();
             location.reload();
         }
     });
 }
+settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) closeSettings(); });
 
-settingsOverlay.addEventListener('click', (e) => {
-    if (e.target === settingsOverlay) closeSettings();
-});
-
-
-async function checkSavedBook() {
-    const meta = await StorageService.getProgress();
-    if (meta && meta.title) {
-        currentBookMeta = meta;
-        currentBookTitle = meta.title;
-        currentBookAuthor = meta.author;
-
-        resumeCard.style.display = 'block';
-        uploadCard.style.display = 'none';
-        
-        resumeTitle.textContent = meta.title;
-        resumeInfo.textContent = "Progress saved"; 
-    } else {
-        resumeCard.style.display = 'none';
-        uploadCard.style.display = 'block';
-    }
-}
-
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(`tab-content-${btn.dataset.target}`).classList.add('active');
-        currentMode = btn.dataset.target;
-        resetReader();
-    });
-});
-
-
-btnResume.addEventListener('click', async () => {
-    const fileBlob = await StorageService.loadBookFile();
-    if (fileBlob) {
-        showToast("Loading from storage...", toast);
-        EpubBridge.loadBook(fileBlob);
-    } else {
-        alert("Error: Book file not found.");
-        resetBookData();
-    }
-});
-
-btnDeleteBook.addEventListener('click', async () => {
-    if(confirm("Remove this book?")) {
-        await resetBookData();
-    }
-});
-
-async function resetBookData() {
-    await StorageService.clearBookData();
-    location.reload();
-}
 
 
 epubInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (file) {
-        showToast("Saving...", toast);
-        await StorageService.saveBookFile(file);
-
+        showToast("Processing...", toast);
+        
         const reader = new FileReader();
         reader.onload = (e) => EpubBridge.loadBook(e.target.result);
         reader.readAsArrayBuffer(file);
+        
+        window.tempUploadFile = file;
     }
 });
 
-EpubBridge.onMetadataReady = (title, author) => {
+EpubBridge.onMetadataReady = async (title, author) => {
     currentBookTitle = title || "Unknown Title";
     currentBookAuthor = author || "";
 
     bookMetadata.textContent = `${currentBookTitle}`;
     bookMetadata.style.display = 'block';
     
-    if (!currentBookMeta) {
-        saveCurrentState();
+    if (window.tempUploadFile) {
+        const newBook = await StorageService.addBook(window.tempUploadFile, currentBookTitle, currentBookAuthor);
+        currentBookId = newBook.id;
+        window.tempUploadFile = null;
+        showToast("Saved to Library", toast);
     }
+    
 };
 
 document.addEventListener('epubChaptersLoaded', (e) => {
@@ -210,12 +276,16 @@ document.addEventListener('epubChaptersLoaded', (e) => {
         chapterSelect.appendChild(opt);
     });
 
-    if (currentBookMeta && currentBookMeta.chapterHref) {
-        chapterSelect.value = currentBookMeta.chapterHref;
-        EpubBridge.loadChapter(currentBookMeta.chapterHref);
-    } else {
-        if(chapters.length > 0) EpubBridge.loadChapter(chapters[0].href);
-    }
+    StorageService.getLibrary().then(lib => {
+        const book = lib.find(b => b.id === currentBookId);
+        if (book && book.chapterHref) {
+            chapterSelect.value = book.chapterHref;
+            EpubBridge.loadChapter(book.chapterHref);
+            window.tempWordIndex = book.wordIndex; 
+        } else {
+            if(chapters.length > 0) EpubBridge.loadChapter(chapters[0].href);
+        }
+    });
 
     resumeCard.style.display = 'none';
     uploadCard.style.display = 'none';
@@ -230,10 +300,15 @@ chapterSelect.addEventListener('change', (e) => {
 EpubBridge.onChapterReady = (htmlContent) => {
     words = parseHTMLToRSVP(htmlContent);
     
-    if (currentBookMeta && currentBookMeta.wordIndex > 0) {
-        currentIndex = Math.min(words.length - 1, currentBookMeta.wordIndex);
+    let targetIndex = 0;
+    if (window.tempWordIndex !== undefined) {
+        targetIndex = window.tempWordIndex;
+        window.tempWordIndex = undefined;
+    }
+
+    if (targetIndex > 0) {
+        currentIndex = Math.min(words.length - 1, targetIndex);
         showToast(`Resumed at word ${currentIndex}`, toast);
-        currentBookMeta = null;
     } else {
         currentIndex = 0;
         showToast("Chapter Loaded", toast);
@@ -243,39 +318,43 @@ EpubBridge.onChapterReady = (htmlContent) => {
         renderWord(words[currentIndex], wordOutput);
     } else {
         renderWord("Empty", wordOutput);
-        alert("This chapter seems empty. Try another one.");
+        alert("This chapter seems empty.");
     }
 };
 
 function saveCurrentState() {
-    if (currentMode === 'epub' && EpubBridge.book) {
+    if (currentMode === 'epub' && currentBookId && EpubBridge.book) {
         const href = chapterSelect.value;
-        StorageService.saveProgress(currentBookTitle, currentBookAuthor, href, currentIndex);
+        StorageService.saveProgress(currentBookId, href, currentIndex);
     }
-    const currentFont = fontSelect ? fontSelect.value : 'system';
+    const currentFont = fontSelect ? fontSelect.value : 'classic';
     StorageService.saveSettings(currentWpm, currentMode, currentFont);
 }
 
 window.addEventListener('beforeunload', () => {
-    if (!isResetting) {
-        saveCurrentState();
-    }
+    if (!isResetting) saveCurrentState();
+});
+
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-content-${btn.dataset.target}`).classList.add('active');
+        currentMode = btn.dataset.target;
+        resetReader();
+    });
 });
 
 btnPrevChapter.addEventListener('click', () => {
     const prev = EpubBridge.getPreviousChapter();
-    if (prev) {
-        chapterSelect.value = prev;
-        EpubBridge.loadChapter(prev);
-    }
+    if (prev) { chapterSelect.value = prev; EpubBridge.loadChapter(prev); }
 });
 
 btnNextChapter.addEventListener('click', () => {
     const next = EpubBridge.getNextChapter();
-    if (next) {
-        chapterSelect.value = next;
-        EpubBridge.loadChapter(next);
-    }
+    if (next) { chapterSelect.value = next; EpubBridge.loadChapter(next); }
 });
 
 btnSyncPhrase.addEventListener('click', () => {
@@ -283,12 +362,8 @@ btnSyncPhrase.addEventListener('click', () => {
     if (phrase) {
         const idx = EpubBridge.findPhraseIndex(words, phrase);
         if (idx !== -1) {
-            currentIndex = idx;
-            renderWord(words[currentIndex], wordOutput);
-            showToast("Synced!", toast);
-        } else {
-            alert("Not found in chapter.");
-        }
+            currentIndex = idx; renderWord(words[currentIndex], wordOutput); showToast("Synced!", toast);
+        } else { alert("Not found."); }
     }
 });
 
@@ -327,11 +402,7 @@ function startReader() {
 
 function loopReader() {
     if (!isPlaying) return;
-    if (currentIndex >= words.length) { 
-        pauseReader(); 
-        currentIndex = 0; 
-        return; 
-    }
+    if (currentIndex >= words.length) { pauseReader(); currentIndex = 0; return; }
 
     const currentWordObj = words[currentIndex];
     renderWord(currentWordObj, wordOutput);
@@ -346,15 +417,10 @@ function loopReader() {
         const len = text.length;
         const lastChar = text.slice(-1);
         
-        if (',;'.includes(lastChar)) {
-            finalDelay = baseDelay * 2.0; 
-        } else if ('.?!:”。'.includes(lastChar)) {
-            finalDelay = baseDelay * 3.2;
-        }
+        if (',;'.includes(lastChar)) finalDelay = baseDelay * 2.0;
+        else if ('.?!:”。'.includes(lastChar)) finalDelay = baseDelay * 3.2;
         
-        if (len > 13) {
-            finalDelay = finalDelay * 1.4;
-        }
+        if (len > 13) finalDelay = finalDelay * 1.4;
     }
 
     currentIndex++;
@@ -364,7 +430,7 @@ function loopReader() {
 function pauseReader() {
     isPlaying = false; 
     clearTimeout(timerOut); 
-    btnToggle.textContent = "Continue";
+    btnToggle.textContent = "Continue"; 
     saveCurrentState();
 }
 

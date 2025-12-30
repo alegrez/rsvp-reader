@@ -24,8 +24,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://alegrez.github.io/rsvp-reader/mobile.html">
 
-    <link rel="stylesheet" href="css/style.css?v=1766864183">
-    <link rel="stylesheet" href="css/mobile.css?v=1766864183">
+    <link rel="stylesheet" href="css/style.css?v=1767128984">
+    <link rel="stylesheet" href="css/mobile.css?v=1767128984">
 </head>
 <body>
 
@@ -57,16 +57,20 @@
         <div id="tab-content-epub" class="tab-content">
     
             <div id="resume-card" style="display:none; background: #e9ecef; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
-                <p style="margin: 0 0 10px; color: #666; font-size: 0.9rem;">Continue reading:</p>
+                <p style="margin: 0 0 10px; color: #666; font-size: 0.9rem;">Last read:</p>
                 <h3 id="resume-title" style="margin: 0 0 5px; color: var(--secondary-color);">Book Title</h3>
                 <p id="resume-info" style="margin: 0 0 15px; font-size: 0.9rem;">Chapter X</p>
                 
-                <button id="btnResume" style="width:100%; max-width: 250px; background-color: var(--primary-color); margin-bottom: 10px;">
-                    📖 Open Book
+                <button id="btnResume" style="width:100%; max-width: 300px; background-color: var(--primary-color); margin-bottom: 10px; font-size: 1.1rem;">
+                    Continue Reading ▶
                 </button>
-                <div style="margin-top: 10px;">
-                    <button id="btnDeleteBook" style="background: transparent; color: #e76f51; border: 1px solid #e76f51; padding: 5px 10px; font-size: 0.8rem;">
-                        🗑 Remove & Upload New
+                
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                    <button id="btnOpenLibrary" style="background-color: #457b9d; flex: 1; max-width: 145px;">
+                        📚 Library
+                    </button>
+                    <button id="btnUploadNew" style="background-color: #fff; color: #333; border: 1px solid #ccc; flex: 1; max-width: 145px;">
+                        ➕ New Book
                     </button>
                 </div>
             </div>
@@ -78,8 +82,11 @@
             
             <div id="book-metadata" style="display:none; margin-top: 10px; font-weight: bold; color: var(--secondary-color);"></div>
 
-            <div id="epub-controls" class="controls-container" style="display:none; margin-top: 10px; background: #f8f9fa;">
-                <div class="control-group" style="width: 100%;">
+            <div id="epub-controls" class="controls-container" style="display:none; margin-top: 10px; background: #f8f9fa; flex-direction: column; gap: 10px;">
+                <div class="control-group" style="width: 100%; display: flex; gap: 5px;">
+                    <button id="btnLibraryFromControls" class="small-btn" style="flex: 0 0 auto; width: 50px; background-color: #6c757d; font-size: 1.2rem; padding: 0;" title="My Library">
+                        📚
+                    </button>
                     <select id="chapterSelect" style="flex: 1; padding: 5px;"></select>
                 </div>
                 <div class="control-group" style="width: 100%; justify-content: space-between;">
@@ -175,14 +182,32 @@
         </div>
     </div>
 
+    <div id="library-overlay" class="settings-overlay">
+        <div class="settings-card" style="max-width: 500px;">
+            <div class="settings-header">
+                <h2>My Library</h2>
+                <button id="btnCloseLibrary" class="close-settings-btn">×</button>
+            </div>
+            
+            <div id="library-list" class="library-list-container">
+                </div>
+            
+            <div style="text-align: right; margin-top: 10px;">
+                <button id="btnUploadFromLib" style="width: 100%; background-color: #2a9d8f;">
+                    ➕ Add New Book
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
     
-    <script src="js/rsvp-core.js?v=1766864183"></script>
-    <script src="js/epub-bridge.js?v=1766864183"></script>
-    <script src="js/storage.js?v=1766864183"></script>
-    <script src="js/mobile.js?v=1766864183"></script>
+    <script src="js/rsvp-core.js?v=1767128984"></script>
+    <script src="js/epub-bridge.js?v=1767128984"></script>
+    <script src="js/storage.js?v=1767128984"></script>
+    <script src="js/mobile.js?v=1767128984"></script>
 </body>
 </html>

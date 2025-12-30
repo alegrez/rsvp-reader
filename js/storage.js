@@ -1,55 +1,97 @@
 /**
- * Maneja la persistencia usando IndexedDB (para el archivo) y LocalStorage (para configuraciones simples)
- * Dependencia: idb-keyval (cargada via CDN)
+ * Maneja la persistencia usando IndexedDB
+ * Dependencia: idb-keyval
  */
 
 const StorageService = {
-    KEY_FILE: 'rsvp_epub_file',
-    KEY_META: 'rsvp_epub_meta',
+    KEY_LIB_INDEX: 'rsvp_library_index',
     KEY_SETTINGS: 'rsvp_settings',
+    PREFIX_BOOK: 'rsvp_book_',
 
-
-    async saveBookFile(fileBlob) {
+    async migrateOldData() {
         if (!window.idbKeyval) return;
-        try {
-            await idbKeyval.set(this.KEY_FILE, fileBlob);
-            console.log("EPUB saved to IndexedDB");
-        } catch (e) {
-            console.error("Error saving book:", e);
+        
+        const oldFile = await idbKeyval.get('rsvp_epub_file');
+        const oldMeta = await idbKeyval.get('rsvp_epub_meta');
+
+        if (oldFile && oldMeta) {
+            console.log("Migrating old book to library format...");
+            await this.addBook(oldFile, oldMeta.title, oldMeta.author, oldMeta);
+            
+            await idbKeyval.del('rsvp_epub_file');
+            await idbKeyval.del('rsvp_epub_meta');
+            console.log("Migration complete.");
         }
     },
 
-    async loadBookFile() {
+    async getLibrary() {
+        if (!window.idbKeyval) return [];
+        await this.migrateOldData();
+        return (await idbKeyval.get(this.KEY_LIB_INDEX)) || [];
+    },
+
+    async addBook(fileBlob, title, author, initialProgress = null) {
         if (!window.idbKeyval) return null;
-        try {
-            return await idbKeyval.get(this.KEY_FILE);
-        } catch (e) {
-            console.error("Error loading book:", e);
-            return null;
-        }
-    },
-
-    async clearBookData() {
-        if (!window.idbKeyval) return;
-        await idbKeyval.del(this.KEY_FILE);
-        await idbKeyval.del(this.KEY_META);
-    },
-
-    async saveProgress(title, author, chapterHref, wordIndex) {
-        if (!window.idbKeyval) return;
-        const data = {
-            title, 
-            author, 
-            chapterHref, 
-            wordIndex, 
-            lastActive: Date.now()
+        
+        const library = (await idbKeyval.get(this.KEY_LIB_INDEX)) || [];
+        
+        const bookId = crypto.randomUUID ? crypto.randomUUID() : 'book_' + Date.now();
+        
+        const newBook = {
+            id: bookId,
+            title: title || "Unknown Title",
+            author: author || "Unknown Author",
+            addedAt: Date.now(),
+            lastRead: Date.now(),
+            chapterHref: initialProgress ? initialProgress.chapterHref : null,
+            wordIndex: initialProgress ? initialProgress.wordIndex : 0
         };
-        await idbKeyval.set(this.KEY_META, data);
+
+        await idbKeyval.set(this.PREFIX_BOOK + bookId, fileBlob);
+
+        library.unshift(newBook);
+        await idbKeyval.set(this.KEY_LIB_INDEX, library);
+
+        return newBook;
     },
 
-    async getProgress() {
+    async loadBookFile(bookId) {
         if (!window.idbKeyval) return null;
-        return await idbKeyval.get(this.KEY_META);
+        return await idbKeyval.get(this.PREFIX_BOOK + bookId);
+    },
+
+    async deleteBook(bookId) {
+        if (!window.idbKeyval) return;
+        
+        await idbKeyval.del(this.PREFIX_BOOK + bookId);
+        
+        let library = (await idbKeyval.get(this.KEY_LIB_INDEX)) || [];
+        library = library.filter(b => b.id !== bookId);
+        await idbKeyval.set(this.KEY_LIB_INDEX, library);
+    },
+
+
+    async saveProgress(bookId, chapterHref, wordIndex) {
+        if (!window.idbKeyval || !bookId) return;
+        
+        const library = (await idbKeyval.get(this.KEY_LIB_INDEX)) || [];
+        const bookIndex = library.findIndex(b => b.id === bookId);
+
+        if (bookIndex !== -1) {
+            library[bookIndex].chapterHref = chapterHref;
+            library[bookIndex].wordIndex = wordIndex;
+            library[bookIndex].lastRead = Date.now();
+            
+            const book = library.splice(bookIndex, 1)[0];
+            library.unshift(book);
+
+            await idbKeyval.set(this.KEY_LIB_INDEX, library);
+        }
+    },
+
+    async getLastReadBook() {
+        const library = await this.getLibrary();
+        return library.length > 0 ? library[0] : null;
     },
 
     
