@@ -1,19 +1,19 @@
 const CACHE_NAME = 'rsvp-reader-v1';
 const STATIC_ASSETS = [
-  '/rsvp-reader/',
-  '/rsvp-reader/index.html',
-  '/rsvp-reader/mobile.html',
-  '/rsvp-reader/css/style.css',
-  '/rsvp-reader/css/desktop.css',
-  '/rsvp-reader/css/mobile.css',
-  '/rsvp-reader/js/rsvp-core.js',
-  '/rsvp-reader/js/epub-bridge.js',
-  '/rsvp-reader/js/storage.js',
-  '/rsvp-reader/js/desktop.js',
-  '/rsvp-reader/js/mobile.js',
-  '/rsvp-reader/manifest.json',
-  '/rsvp-reader/icons/icon-192.png',
-  '/rsvp-reader/icons/icon-512.png',
+  './',
+  './index.html',
+  './mobile.html',
+  './css/style.css',
+  './css/desktop.css',
+  './css/mobile.css',
+  './js/rsvp-core.js',
+  './js/epub-bridge.js',
+  './js/storage.js',
+  './js/desktop.js',
+  './js/mobile.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
 ];
 
 // External CDN resources to cache
@@ -94,7 +94,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // Return cached index.html for offline navigation
-          return caches.match('/rsvp-reader/index.html');
+          return caches.match('./index.html');
         }),
     );
     return;
