@@ -1,4 +1,3 @@
-const weightSelect = document.getElementById('weightSelect');
 let words = [];
 let currentIndex = 0;
 let isPlaying = false;
@@ -54,6 +53,8 @@ const settingsOverlay = document.getElementById('settings-overlay');
 const btnCloseSettings = document.getElementById('btnCloseSettings');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
 const fontSelect = document.getElementById('fontSelect');
+const weightSelect = document.getElementById('weightSelect');
+const themeSelect = document.getElementById('themeSelect');
 const btnFactoryReset = document.getElementById('btnFactoryReset');
 
 const libraryOverlay = document.getElementById('library-overlay');
@@ -122,12 +123,23 @@ function updateWeightDropdown(fontKey, preferredWeight) {
 function applySettings(settings) {
     const fontKey = settings.font || 'classic';
     const savedWeight = settings.fontWeight || '400';
-    
+    const theme = settings.theme || 'light';
+
+    const metaThemeColor = document.querySelector("meta[name=theme-color]");
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if(metaThemeColor) metaThemeColor.setAttribute("content", "#121212");
+    } else {
+        document.body.classList.remove('dark-mode');
+        if(metaThemeColor) metaThemeColor.setAttribute("content", "#264653");
+    }
+    if (themeSelect) themeSelect.value = theme;
+
     updateWeightDropdown(fontKey, savedWeight);
     
     const finalWeight = weightSelect ? weightSelect.value : savedWeight;
-    
     const fontFamily = fontConfig[fontKey].family;
+    
     document.documentElement.style.setProperty('--font-family', fontFamily);
     document.documentElement.style.setProperty('--font-weight', finalWeight);
 
@@ -139,8 +151,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     EpubBridge.init();
     
     const settings = StorageService.getSettings();
-    if(settings.wpm) wpmInput.value = settings.wpm;
     
+    if(settings.wpm) {
+        currentWpm = parseInt(settings.wpm);
+    }
+    
+    updateDisplays();
     applySettings(settings);
     
     await checkLastReadBook();
@@ -270,16 +286,27 @@ function closeSettings() { settingsOverlay.classList.remove('active'); }
 if(btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettings);
 if(btnSaveSettings) btnSaveSettings.addEventListener('click', closeSettings);
 
+if (themeSelect) {
+    themeSelect.addEventListener('change', (e) => {
+        const newTheme = e.target.value;
+        const currentFont = fontSelect ? fontSelect.value : 'classic';
+        const currentWeight = weightSelect ? weightSelect.value : '400';
+        
+        StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight, newTheme);
+        applySettings({ wpm: currentWpm, mode: currentMode, font: currentFont, fontWeight: currentWeight, theme: newTheme });
+    });
+}
+
 if (fontSelect) {
     fontSelect.addEventListener('change', (e) => {
         const newFont = e.target.value;
         const currentWeight = weightSelect ? weightSelect.value : '400';
+        const currentTheme = themeSelect ? themeSelect.value : 'light';
         
         updateWeightDropdown(newFont, currentWeight);
-        
         const newValidWeight = weightSelect.value;
         
-        StorageService.saveSettings(currentWpm, currentMode, newFont, newValidWeight);
+        StorageService.saveSettings(currentWpm, currentMode, newFont, newValidWeight, currentTheme);
         
         document.documentElement.style.setProperty('--font-family', fontConfig[newFont].family);
         document.documentElement.style.setProperty('--font-weight', newValidWeight);
@@ -290,8 +317,9 @@ if (weightSelect) {
     weightSelect.addEventListener('change', (e) => {
         const newWeight = e.target.value;
         const currentFont = fontSelect ? fontSelect.value : 'classic';
+        const currentTheme = themeSelect ? themeSelect.value : 'light';
         
-        StorageService.saveSettings(currentWpm, currentMode, currentFont, newWeight);
+        StorageService.saveSettings(currentWpm, currentMode, currentFont, newWeight, currentTheme);
         document.documentElement.style.setProperty('--font-weight', newWeight);
     });
 }
@@ -401,7 +429,8 @@ function saveCurrentState() {
     }
     const currentFont = fontSelect ? fontSelect.value : 'classic';
     const currentWeight = weightSelect ? weightSelect.value : '400';
-    StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight);
+    const currentTheme = themeSelect ? themeSelect.value : 'light';
+    StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight, currentTheme);
 }
 
 window.addEventListener('beforeunload', () => {

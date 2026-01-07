@@ -1,4 +1,3 @@
-const weightSelect = document.getElementById('weightSelect');
 let words = [];
 let currentIndex = 0;
 let isPlaying = false;
@@ -44,6 +43,8 @@ const settingsOverlay = document.getElementById('settings-overlay');
 const btnCloseSettings = document.getElementById('btnCloseSettings');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
 const fontSelect = document.getElementById('fontSelect');
+const weightSelect = document.getElementById('weightSelect');
+const themeSelect = document.getElementById('themeSelect');
 const btnFactoryReset = document.getElementById('btnFactoryReset');
 
 const libraryOverlay = document.getElementById('library-overlay');
@@ -112,12 +113,20 @@ function updateWeightDropdown(fontKey, preferredWeight) {
 function applySettings(settings) {
     const fontKey = settings.font || 'classic';
     const savedWeight = settings.fontWeight || '400';
-    
+    const theme = settings.theme || 'light';
+
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+    if (themeSelect) themeSelect.value = theme;
+
     updateWeightDropdown(fontKey, savedWeight);
     
     const finalWeight = weightSelect ? weightSelect.value : savedWeight;
-    
     const fontFamily = fontConfig[fontKey].family;
+    
     document.documentElement.style.setProperty('--font-family', fontFamily);
     document.documentElement.style.setProperty('--font-weight', finalWeight);
 
@@ -289,8 +298,9 @@ function saveCurrentState() {
 
     const currentFont = fontSelect ? fontSelect.value : 'classic';
     const currentWeight = weightSelect ? weightSelect.value : '400';
+    const currentTheme = themeSelect ? themeSelect.value : 'light';
     const wpm = parseInt(wpmInput.value) || 300;
-    StorageService.saveSettings(wpm, currentMode, currentFont, currentWeight);
+    StorageService.saveSettings(wpm, currentMode, currentFont, currentWeight, currentTheme);
 }
 
 document.addEventListener('epubChaptersLoaded', (e) => {
@@ -352,17 +362,31 @@ if(btnSettings) {
 function closeSettings() { settingsOverlay.classList.remove('active'); }
 if(btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettings);
 if(btnSaveSettings) btnSaveSettings.addEventListener('click', closeSettings);
+
+if (themeSelect) {
+    themeSelect.addEventListener('change', (e) => {
+        const newTheme = e.target.value;
+        const currentFont = fontSelect ? fontSelect.value : 'classic';
+        const currentWeight = weightSelect ? weightSelect.value : '400';
+        const currentWpmVal = parseInt(wpmInput.value) || 300;
+
+        StorageService.saveSettings(currentWpmVal, currentMode, currentFont, currentWeight, newTheme);
+        applySettings({ wpm: currentWpmVal, mode: currentMode, font: currentFont, fontWeight: currentWeight, theme: newTheme });
+    });
+}
+
 if (fontSelect) {
     fontSelect.addEventListener('change', (e) => {
         const newFont = e.target.value;
         const currentWeight = weightSelect ? weightSelect.value : '400';
+        const currentTheme = themeSelect ? themeSelect.value : 'light';
         
         updateWeightDropdown(newFont, currentWeight);
         
         const newValidWeight = weightSelect.value;
         const currentWpmVal = parseInt(wpmInput.value) || 300;
-        
-        StorageService.saveSettings(currentWpmVal, currentMode, newFont, newValidWeight);
+
+        StorageService.saveSettings(currentWpmVal, currentMode, newFont, newValidWeight, currentTheme);
         document.documentElement.style.setProperty('--font-family', fontConfig[newFont].family);
         document.documentElement.style.setProperty('--font-weight', newValidWeight);
     });
@@ -373,8 +397,9 @@ if (weightSelect) {
         const newWeight = e.target.value;
         const currentFont = fontSelect ? fontSelect.value : 'classic';
         const currentWpmVal = parseInt(wpmInput.value) || 300;
+        const currentTheme = themeSelect ? themeSelect.value : 'light';
         
-        StorageService.saveSettings(currentWpmVal, currentMode, currentFont, newWeight);
+        StorageService.saveSettings(currentWpmVal, currentMode, currentFont, newWeight, currentTheme);
         document.documentElement.style.setProperty('--font-weight', newWeight);
     });
 }

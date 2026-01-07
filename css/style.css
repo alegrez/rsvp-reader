@@ -390,3 +390,118 @@ select {
     color: #999;
     font-style: italic;
 }
+
+body.dark-mode {
+    --bg-color: #121212;
+    --box-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --accent-color: #ff6b6b; /* Rojo más brillante para el pivote */
+    --primary-color: #4db6ac; /* Teal más claro */
+    --secondary-color: #a8dadc; /* Texto secundario más claro */
+    --overlay-bg: rgba(18, 18, 18, 0.98);
+}
+
+body.dark-mode textarea,
+body.dark-mode select,
+body.dark-mode input[type="number"] {
+    background-color: #2d2d2d;
+    color: #fff;
+    border: 1px solid #444;
+}
+
+body.dark-mode .word-container {
+    color: #e0e0e0;
+}
+
+body.dark-mode .word-container.is-bold {
+    color: #fff;
+}
+
+body.dark-mode .settings-header {
+    border-bottom: 1px solid #333;
+}
+
+body.dark-mode .library-item {
+    background-color: #252525;
+    border-bottom: 1px solid #333;
+}
+body.dark-mode .library-item:hover {
+    background-color: #2d2d2d;
+}
+body.dark-mode .lib-title {
+    color: #fff;
+}
+
+body.dark-mode .tab-btn.active {
+    background-color: var(--box-color);
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+body.dark-mode .tab-btn {
+    color: #888;
+}
+body.dark-mode .tab-btn:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+body.dark-mode .controls-container,
+body.dark-mode .settings-card,
+body.dark-mode .controls-card {
+    background-color: var(--box-color);
+    color: var(--text-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+body.dark-mode #resume-card {
+    background-color: #252525 !important;
+    border: 1px solid #333;
+    color: var(--text-color);
+}
+body.dark-mode #resume-card p {
+    color: #aaa !important;
+}
+
+body.dark-mode .file-upload-container {
+    background-color: var(--box-color);
+    border-color: #444;
+    color: var(--text-color);
+}
+
+body.dark-mode #epub-controls {
+    background-color: #1a1a1a !important;
+    border-top: 1px solid #333;
+    color: var(--text-color);
+}
+
+body.dark-mode #reader-display {
+    background-color: var(--box-color);
+    border-top: 4px solid var(--primary-color);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .wpm-stepper {
+    background-color: #2d2d2d;
+    color: #fff;
+}
+body.dark-mode .wpm-btn {
+    background-color: #444;
+    color: #fff;
+}
+
+
+body.dark-mode .mode-tabs {
+    border-bottom-color: #333; 
+}
+
+body.dark-mode #reader-display {
+    border-top-color: #1a4d45;
+}
+
+body.dark-mode .settings-card > div[style*="border-top"] {
+    border-top-color: #333 !important;
+}
+
+body.dark-mode .wpm-btn, 
+body.dark-mode .small-btn {
+    color: #e0e0e0;
+}
