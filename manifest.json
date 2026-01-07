@@ -22,11 +22,7 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": [
-    "education",
-    "productivity",
-    "utilities"
-  ],
+  "categories": ["education", "productivity", "utilities"],
   "lang": "en",
   "dir": "ltr"
 }
