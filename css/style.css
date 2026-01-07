@@ -505,3 +505,38 @@ body.dark-mode .wpm-btn,
 body.dark-mode .small-btn {
     color: #e0e0e0;
 }
+
+#progress-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    
+    min-width: 120px;
+    height: 60px;
+    
+    display: flex;
+    align-items: flex-end;
+    padding-left: 15px;
+    padding-bottom: 10px;
+    box-sizing: border-box;
+
+    font-size: 0.8rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    z-index: 15;
+    user-select: none;
+    -webkit-user-select: none;
+    
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+#progress-indicator:hover {
+    opacity: 1;
+}
+
+body.dark-mode #progress-indicator {
+    color: #888; 
+}

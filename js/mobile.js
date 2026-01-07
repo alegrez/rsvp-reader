@@ -11,6 +11,7 @@ let currentMode = 'text';
 let currentBookId = null;
 let currentBookTitle = "Unknown Title";
 let currentBookAuthor = "";
+let progressMode = 1;
 let isResetting = false;
 
 const inputText = document.getElementById('inputText');
@@ -22,6 +23,7 @@ const btnContext = document.getElementById('btnContext');
 const readerDisplay = document.getElementById('reader-display');
 const toast = document.getElementById('toast');
 const contextOverlay = document.getElementById('context-overlay');
+const progressIndicator = document.getElementById('progress-indicator');
 const wpmDisplay = document.getElementById('wpmDisplay');
 const fsWpmDisplay = document.getElementById('fsWpmDisplay');
 const btnFsExit = document.getElementById('btnFsExit');
@@ -152,12 +154,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     const settings = StorageService.getSettings();
     
-    if(settings.wpm) {
-        currentWpm = parseInt(settings.wpm);
-    }
+    if(settings.wpm) currentWpm = parseInt(settings.wpm);
+    if (settings.progressMode !== undefined) progressMode = settings.progressMode;
     
     updateDisplays();
     applySettings(settings);
+    updateProgress();
     
     await checkLastReadBook();
 });
@@ -292,7 +294,7 @@ if (themeSelect) {
         const currentFont = fontSelect ? fontSelect.value : 'classic';
         const currentWeight = weightSelect ? weightSelect.value : '400';
         
-        StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight, newTheme);
+        StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight, newTheme, progressMode);
         applySettings({ wpm: currentWpm, mode: currentMode, font: currentFont, fontWeight: currentWeight, theme: newTheme });
     });
 }
@@ -306,7 +308,7 @@ if (fontSelect) {
         updateWeightDropdown(newFont, currentWeight);
         const newValidWeight = weightSelect.value;
         
-        StorageService.saveSettings(currentWpm, currentMode, newFont, newValidWeight, currentTheme);
+        StorageService.saveSettings(currentWpm, currentMode, newFont, newValidWeight, currentTheme, progressMode);
         
         document.documentElement.style.setProperty('--font-family', fontConfig[newFont].family);
         document.documentElement.style.setProperty('--font-weight', newValidWeight);
@@ -319,7 +321,7 @@ if (weightSelect) {
         const currentFont = fontSelect ? fontSelect.value : 'classic';
         const currentTheme = themeSelect ? themeSelect.value : 'light';
         
-        StorageService.saveSettings(currentWpm, currentMode, currentFont, newWeight, currentTheme);
+        StorageService.saveSettings(currentWpm, currentMode, currentFont, newWeight, currentTheme, progressMode);
         document.documentElement.style.setProperty('--font-weight', newWeight);
     });
 }
@@ -420,6 +422,7 @@ EpubBridge.onChapterReady = (htmlContent) => {
         renderWord("Empty", wordOutput);
         alert("This chapter seems empty.");
     }
+    updateProgress();
 };
 
 function saveCurrentState() {
@@ -430,7 +433,7 @@ function saveCurrentState() {
     const currentFont = fontSelect ? fontSelect.value : 'classic';
     const currentWeight = weightSelect ? weightSelect.value : '400';
     const currentTheme = themeSelect ? themeSelect.value : 'light';
-    StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight, currentTheme);
+    StorageService.saveSettings(currentWpm, currentMode, currentFont, currentWeight, currentTheme, progressMode);
 }
 
 window.addEventListener('beforeunload', () => {
@@ -466,6 +469,8 @@ btnSyncPhrase.addEventListener('click', () => {
         if (idx !== -1) {
             currentIndex = idx; renderWord(words[currentIndex], wordOutput); showToast("Synced!", toast);
         } else { alert("Not found."); }
+        
+        updateProgress();
     }
 });
 
@@ -508,6 +513,7 @@ function loopReader() {
 
     const currentWordObj = words[currentIndex];
     renderWord(currentWordObj, wordOutput);
+    updateProgress();
 
     const baseDelay = 60000 / currentWpm;
     let finalDelay = baseDelay;
@@ -546,6 +552,7 @@ function resetReader() {
     pauseReader(); currentIndex = 0; 
     if (currentMode === 'text') words = []; 
     btnToggle.textContent = "Start"; renderWord("Ready", wordOutput);
+    updateProgress();
 }
 
 function flashFeedback(side) {
@@ -571,6 +578,7 @@ function skipParagraphPrev() {
     
     currentIndex = newIndex;
     renderWord(words[currentIndex], wordOutput);
+    updateProgress();
     showToast("⏮ Paragraph Start", toast);
     flashFeedback('left');
 }
@@ -701,3 +709,31 @@ btnToggle.addEventListener('click', togglePlayPause);
 btnReset.addEventListener('click', resetReader);
 btnContext.addEventListener('click', toggleContextView);
 btnFsContext.addEventListener('click', toggleContextView);
+
+function updateProgress() {
+    if (!progressIndicator) return;
+    
+    if (!words || words.length === 0) {
+        progressIndicator.textContent = "";
+        return;
+    }
+
+    const total = words.length;
+    const current = Math.min(currentIndex + 1, total); 
+
+    if (progressMode === 0) {
+        progressIndicator.textContent = "";
+    } else if (progressMode === 1) {
+        const percent = Math.floor((current / total) * 100);
+        progressIndicator.textContent = `${percent}%`;
+    } else if (progressMode === 2) {
+        progressIndicator.textContent = `${current} / ${total}`;
+    }
+}
+
+progressIndicator.addEventListener('click', (e) => {
+    e.stopPropagation();
+    progressMode = (progressMode + 1) % 3;
+    updateProgress();
+    saveCurrentState();
+});
