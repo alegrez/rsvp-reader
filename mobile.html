@@ -1,231 +1,315 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
-    
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <head>
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>"
+        />
+        <link rel="manifest" href="manifest.json" />
+        <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
-    <title>RSVP Mobile Reader - Speed Reading App</title>
-    
-    <meta name="description" content="Mobile-optimized RSVP speed reading tool. Read long texts in minutes using touch gestures and immersive landscape mode. Free and no installation required.">
-    <meta name="keywords" content="rsvp reader mobile, speed reading android, speed reading iphone, speed reading app, read fast mobile">
-    <meta name="author" content="Alejandro Grez">
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#264653">
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-    <link rel="canonical" href="https://alegrez.github.io/rsvp-reader/" />
+        <title>RSVP Mobile Reader - Speed Reading App</title>
 
-    <meta property="og:title" content="RSVP Mobile Reader 📱">
-    <meta property="og:description" content="Turn your phone into a speed reading machine. Gesture controls and landscape mode.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://alegrez.github.io/rsvp-reader/mobile.html">
+        <meta
+            name="description"
+            content="Mobile-optimized RSVP speed reading tool. Read long texts in minutes using touch gestures and immersive landscape mode. Free and no installation required."
+        />
+        <meta
+            name="keywords"
+            content="rsvp reader mobile, speed reading android, speed reading iphone, speed reading app, read fast mobile"
+        />
+        <meta name="author" content="Alejandro Grez" />
 
-    <link rel="stylesheet" href="css/style.css?v=1767823699">
-    <link rel="stylesheet" href="css/mobile.css?v=1767823699">
-</head>
-<body>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#264653" />
 
-    <div id="rotate-overlay">
-        <div class="icon">↻</div>
-        <h2>Rotate Device</h2>
-        <p>Rotate your device for better reading.</p>
-    </div>
+        <link rel="canonical" href="https://alegrez.github.io/rsvp-reader/" />
 
-    <a href="index.html?mode=desktop" class="version-link">Go to Desktop Version</a>
-    <h1>RSVP Mobile Reader</h1>
+        <meta property="og:title" content="RSVP Mobile Reader 📱" />
+        <meta
+            property="og:description"
+            content="Turn your phone into a speed reading machine. Gesture controls and landscape mode."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://alegrez.github.io/rsvp-reader/mobile.html" />
 
-    <p class="seo-text" style="font-size: 0.9rem; color: #666; max-width: 600px; margin: 0 auto 1rem; text-align: justify;">
-        This tool uses the <strong>RSVP (Rapid Serial Visual Presentation)</strong> technique 
-        to help you read long texts in less time by eliminating eye movement and improving concentration.
-    </p>
+        <link rel="stylesheet" href="css/style.css?v=1767823699" />
+        <link rel="stylesheet" href="css/mobile.css?v=1767823699" />
+    </head>
 
-    <div class="main-container">
-        
-        <div class="mode-tabs">
-            <button class="tab-btn active" data-target="text">Text</button>
-            <button class="tab-btn" data-target="epub">eBook</button>
+    <body>
+        <div id="rotate-overlay">
+            <div class="icon">↻</div>
+            <h2>Rotate Device</h2>
+            <p>Rotate your device for better reading.</p>
         </div>
 
-        <div id="tab-content-text" class="tab-content active">
-            <textarea id="inputText" placeholder="Paste your text here."></textarea>
-        </div>
+        <a href="index.html?mode=desktop" class="version-link">Go to Desktop Version</a>
+        <h1>RSVP Mobile Reader</h1>
 
-        <div id="tab-content-epub" class="tab-content">
-    
-            <div id="resume-card" style="display:none; background: #e9ecef; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
-                <p style="margin: 0 0 10px; color: #666; font-size: 0.9rem;">Last read:</p>
-                <h3 id="resume-title" style="margin: 0 0 5px; color: var(--secondary-color);">Book Title</h3>
-                <p id="resume-info" style="margin: 0 0 15px; font-size: 0.9rem;">Chapter X</p>
-                
-                <button id="btnResume" style="width:100%; max-width: 300px; background-color: var(--primary-color); margin-bottom: 10px; font-size: 1.1rem;">
-                    Continue Reading ▶
-                </button>
-                
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
-                    <button id="btnOpenLibrary" style="background-color: #457b9d; flex: 1; max-width: 145px;">
-                        📚 Library
+        <p
+            class="seo-text"
+            style="font-size: 0.9rem; color: #666; max-width: 600px; margin: 0 auto 1rem; text-align: justify"
+        >
+            This tool uses the
+            <strong>RSVP (Rapid Serial Visual Presentation)</strong> technique to help you read long texts in less time
+            by eliminating eye movement and improving concentration.
+        </p>
+
+        <div class="main-container">
+            <div class="mode-tabs">
+                <button class="tab-btn active" data-target="text">Text</button>
+                <button class="tab-btn" data-target="epub">eBook</button>
+            </div>
+
+            <div id="tab-content-text" class="tab-content active">
+                <textarea id="inputText" placeholder="Paste your text here."></textarea>
+            </div>
+
+            <div id="tab-content-epub" class="tab-content">
+                <div
+                    id="resume-card"
+                    style="
+                        display: none;
+                        background: #e9ecef;
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                        margin-bottom: 15px;
+                    "
+                >
+                    <p style="margin: 0 0 10px; color: #666; font-size: 0.9rem">Last read:</p>
+                    <h3 id="resume-title" style="margin: 0 0 5px; color: var(--secondary-color)">Book Title</h3>
+                    <p id="resume-info" style="margin: 0 0 15px; font-size: 0.9rem">Chapter X</p>
+
+                    <button
+                        id="btnResume"
+                        style="
+                            width: 100%;
+                            max-width: 300px;
+                            background-color: var(--primary-color);
+                            margin-bottom: 10px;
+                            font-size: 1.1rem;
+                        "
+                    >
+                        Continue Reading ▶
                     </button>
-                    <button id="btnUploadNew" style="background-color: #fff; color: #333; border: 1px solid #ccc; flex: 1; max-width: 145px;">
-                        ➕ New Book
+
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px">
+                        <button id="btnOpenLibrary" style="background-color: #457b9d; flex: 1; max-width: 145px">
+                            📚 Library
+                        </button>
+                        <button
+                            id="btnUploadNew"
+                            style="
+                                background-color: #fff;
+                                color: #333;
+                                border: 1px solid #ccc;
+                                flex: 1;
+                                max-width: 145px;
+                            "
+                        >
+                            ➕ New Book
+                        </button>
+                    </div>
+                </div>
+
+                <div id="upload-card" class="file-upload-container">
+                    <p style="margin-bottom: 10px; font-weight: bold">Upload an .epub file</p>
+                    <input type="file" id="epubInput" accept=".epub" />
+                </div>
+
+                <div
+                    id="book-metadata"
+                    style="display: none; margin-top: 10px; font-weight: bold; color: var(--secondary-color)"
+                ></div>
+
+                <div
+                    id="epub-controls"
+                    class="controls-container"
+                    style="display: none; margin-top: 10px; background: #f8f9fa; flex-direction: column; gap: 10px"
+                >
+                    <div class="control-group" style="width: 100%; display: flex; gap: 5px">
+                        <button
+                            id="btnLibraryFromControls"
+                            class="small-btn"
+                            style="
+                                flex: 0 0 auto;
+                                width: 50px;
+                                background-color: #6c757d;
+                                font-size: 1.2rem;
+                                padding: 0;
+                            "
+                            title="My Library"
+                        >
+                            📚
+                        </button>
+                        <select id="chapterSelect" style="flex: 1; padding: 5px; min-width: 0"></select>
+                    </div>
+                    <div class="control-group" style="width: 100%; justify-content: space-between">
+                        <button id="btnPrevChapter" class="small-btn">◀ Prev</button>
+                        <button id="btnSyncPhrase" class="small-btn" style="background-color: #457b9d">🔍 Find</button>
+                        <button id="btnNextChapter" class="small-btn">Next ▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-card">
+                <div class="wpm-stepper">
+                    <button class="wpm-btn" onclick="changeSpeedGlobal(-25)">-</button>
+                    <span id="wpmDisplay" class="wpm-value">300</span>
+                    <button class="wpm-btn" onclick="changeSpeedGlobal(25)">+</button>
+                </div>
+
+                <div class="control-group">
+                    <button id="btnToggle">Start</button>
+                    <button id="btnReset" class="stop">Reset</button>
+                </div>
+
+                <div class="control-group">
+                    <button id="btnFullscreen" class="fullscreen-btn">Fullscreen ⛶</button>
+                    <button id="btnContext" class="context-btn" style="background-color: #457b9d">View Text 📄</button>
+                    <button id="btnSettings" class="settings-btn" title="Settings">⚙️</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="reader-display">
+            <div class="word-container" id="wordOutput"></div>
+            <div id="progress-indicator"></div>
+            <div class="tap-feedback left" id="feedbackLeft">⏪</div>
+            <div class="tap-feedback right" id="feedbackRight">⏩</div>
+
+            <div id="toast"></div>
+
+            <div id="mobile-fs-toolbar">
+                <div class="fs-capsule">
+                    <button class="fs-wpm-btn" onclick="changeSpeedGlobal(-25)">-</button>
+                    <span id="fsWpmDisplay" class="fs-wpm-val">300</span>
+                    <button class="fs-wpm-btn" onclick="changeSpeedGlobal(25)">+</button>
+                </div>
+                <div class="fs-capsule" style="padding: 5px">
+                    <button id="btnFsContext" class="fs-icon-btn fs-ctx-btn" style="margin-right: 5px">📄</button>
+                    <button id="btnFsExit" class="fs-icon-btn fs-exit-btn">✖</button>
+                </div>
+            </div>
+
+            <div id="context-overlay"></div>
+        </div>
+
+        <div class="controls-info">
+            <p><b>Gestures:</b> Double tap sides to skip. Triple tap left for paragraph start.</p>
+        </div>
+
+        <footer class="repo-footer">
+            <p>Open Source Project</p>
+            <a href="https://github.com/alegrez/rsvp-reader" target="_blank" rel="noopener noreferrer">
+                <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                    ></path>
+                </svg>
+                View on GitHub
+            </a>
+        </footer>
+
+        <div id="settings-overlay" class="settings-overlay">
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>Configuration</h2>
+                    <button id="btnCloseSettings" class="close-settings-btn">×</button>
+                </div>
+
+                <div class="setting-item">
+                    <label for="themeSelect">Theme</label>
+                    <select id="themeSelect">
+                        <option value="light">Light ☀️</option>
+                        <option value="dark">Dark 🌙</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label for="fontSelect">Typeface</label>
+                    <select id="fontSelect">
+                        <option value="classic">Classic (Courier New)</option>
+                        <option value="opendyslexic">OpenDyslexic</option>
+                        <option value="system">System Default (Sans)</option>
+                        <option value="mono">Roboto Mono</option>
+                        <option value="serif">Merriweather (Serif)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label for="weightSelect">Font Weight</label>
+                    <select id="weightSelect">
+                        <option value="300">Light (300)</option>
+                        <option value="400" selected>Normal (400)</option>
+                        <option value="500">Medium (500)</option>
+                        <option value="700">Bold (700)</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px">
+                    <button
+                        id="btnFactoryReset"
+                        style="width: 100%; background-color: transparent; border: 1px solid #e76f51; color: #e76f51"
+                    >
+                        Restore Defaults
+                    </button>
+                </div>
+
+                <div style="text-align: right; margin-top: 20px">
+                    <button id="btnSaveSettings" style="width: 100%">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="library-overlay" class="settings-overlay">
+            <div class="settings-card" style="max-width: 500px">
+                <div class="settings-header">
+                    <h2>My Library</h2>
+                    <button id="btnCloseLibrary" class="close-settings-btn">×</button>
+                </div>
+
+                <div id="library-list" class="library-list-container"></div>
+
+                <div style="text-align: right; margin-top: 10px">
+                    <button id="btnUploadFromLib" style="width: 100%; background-color: #2a9d8f">
+                        ➕ Add New Book
                     </button>
                 </div>
             </div>
-
-            <div id="upload-card" class="file-upload-container">
-                <p style="margin-bottom: 10px; font-weight: bold;">Upload an .epub file</p>
-                <input type="file" id="epubInput" accept=".epub">
-            </div>
-            
-            <div id="book-metadata" style="display:none; margin-top: 10px; font-weight: bold; color: var(--secondary-color);"></div>
-
-            <div id="epub-controls" class="controls-container" style="display:none; margin-top: 10px; background: #f8f9fa; flex-direction: column; gap: 10px;">
-                <div class="control-group" style="width: 100%; display: flex; gap: 5px;">
-                    <button id="btnLibraryFromControls" class="small-btn" style="flex: 0 0 auto; width: 50px; background-color: #6c757d; font-size: 1.2rem; padding: 0;" title="My Library">
-                        📚
-                    </button>
-                    <select id="chapterSelect" style="flex: 1; padding: 5px; min-width: 0;"></select>
-                </div>
-                <div class="control-group" style="width: 100%; justify-content: space-between;">
-                    <button id="btnPrevChapter" class="small-btn">◀ Prev</button>
-                    <button id="btnSyncPhrase" class="small-btn" style="background-color: #457b9d;">🔍 Find</button>
-                    <button id="btnNextChapter" class="small-btn">Next ▶</button>
-                </div>
-            </div>
         </div>
-        
-        <div class="controls-card">
-            <div class="wpm-stepper">
-                <button class="wpm-btn" onclick="changeSpeedGlobal(-25)">-</button>
-                <span id="wpmDisplay" class="wpm-value">300</span>
-                <button class="wpm-btn" onclick="changeSpeedGlobal(25)">+</button>
-            </div>
-            
-            <div class="control-group">
-                <button id="btnToggle">Start</button>
-                <button id="btnReset" class="stop">Reset</button>
-            </div>
-            
-            <div class="control-group">
-                 <button id="btnFullscreen" class="fullscreen-btn">Fullscreen ⛶</button>
-                 <button id="btnContext" class="context-btn" style="background-color: #457b9d;">View Text 📄</button>
-                 <button id="btnSettings" class="settings-btn" title="Settings">⚙️</button>
-            </div>
-        </div>
-    </div>
 
-    <div id="reader-display">
-        <div class="word-container" id="wordOutput"></div>
-        <div id="progress-indicator"></div>
-        <div class="tap-feedback left" id="feedbackLeft">⏪</div>
-        <div class="tap-feedback right" id="feedbackRight">⏩</div>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
 
-        <div id="toast"></div>
-        
-        <div id="mobile-fs-toolbar">
-            <div class="fs-capsule">
-                <button class="fs-wpm-btn" onclick="changeSpeedGlobal(-25)">-</button>
-                <span id="fsWpmDisplay" class="fs-wpm-val">300</span>
-                <button class="fs-wpm-btn" onclick="changeSpeedGlobal(25)">+</button>
-            </div>
-            <div class="fs-capsule" style="padding: 5px;">
-                <button id="btnFsContext" class="fs-icon-btn fs-ctx-btn" style="margin-right: 5px;">📄</button>
-                <button id="btnFsExit" class="fs-icon-btn fs-exit-btn">✖</button>
-            </div>
-        </div>
-        
-        <div id="context-overlay"></div>
-    </div>
-    
-    <div class="controls-info">
-        <p><b>Gestures:</b> Double tap sides to skip. Triple tap left for paragraph start.</p>
-    </div>
+        <script src="js/rsvp-core.js?v=1767823699"></script>
+        <script src="js/epub-bridge.js?v=1767823699"></script>
+        <script src="js/storage.js?v=1767823699"></script>
+        <script src="js/mobile.js?v=1767823699"></script>
 
-    <footer class="repo-footer">
-        <p>Open Source Project</p>
-        <a href="https://github.com/alegrez/rsvp-reader" target="_blank" rel="noopener noreferrer">
-            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-            View on GitHub
-        </a>
-    </footer>
-
-    <div id="settings-overlay" class="settings-overlay">
-        <div class="settings-card">
-            <div class="settings-header">
-                <h2>Configuration</h2>
-                <button id="btnCloseSettings" class="close-settings-btn">×</button>
-            </div>
-
-            <div class="setting-item">
-                <label for="themeSelect">Theme</label>
-                <select id="themeSelect">
-                    <option value="light">Light ☀️</option>
-                    <option value="dark">Dark 🌙</option>
-                </select>
-            </div>
-            
-            <div class="setting-item">
-                <label for="fontSelect">Typeface</label>
-                <select id="fontSelect">
-                    <option value="classic">Classic (Courier New)</option>
-                    <option value="opendyslexic">OpenDyslexic</option>
-                    <option value="system">System Default (Sans)</option>
-                    <option value="mono">Roboto Mono</option>
-                    <option value="serif">Merriweather (Serif)</option>
-                </select>
-            </div>
-
-            <div class="setting-item">
-                <label for="weightSelect">Font Weight</label>
-                <select id="weightSelect">
-                    <option value="300">Light (300)</option>
-                    <option value="400" selected>Normal (400)</option>
-                    <option value="500">Medium (500)</option>
-                    <option value="700">Bold (700)</option>
-                </select>
-            </div>
-
-            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                <button id="btnFactoryReset" style="width: 100%; background-color: transparent; border: 1px solid #e76f51; color: #e76f51;">
-                    Restore Defaults
-                </button>
-            </div>
-            
-            <div style="text-align: right; margin-top: 20px;">
-                <button id="btnSaveSettings" style="width: 100%;">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="library-overlay" class="settings-overlay">
-        <div class="settings-card" style="max-width: 500px;">
-            <div class="settings-header">
-                <h2>My Library</h2>
-                <button id="btnCloseLibrary" class="close-settings-btn">×</button>
-            </div>
-            
-            <div id="library-list" class="library-list-container">
-                </div>
-            
-            <div style="text-align: right; margin-top: 10px;">
-                <button id="btnUploadFromLib" style="width: 100%; background-color: #2a9d8f;">
-                    ➕ Add New Book
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
-    
-    <script src="js/rsvp-core.js?v=1767823699"></script>
-    <script src="js/epub-bridge.js?v=1767823699"></script>
-    <script src="js/storage.js?v=1767823699"></script>
-    <script src="js/mobile.js?v=1767823699"></script>
-</body>
+        <script>
+            // Register Service Worker for PWA
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker
+                        .register('sw.js')
+                        .then((registration) => {
+                            console.log('SW registered:', registration.scope);
+                        })
+                        .catch((error) => {
+                            console.log('SW registration failed:', error);
+                        });
+                });
+            }
+        </script>
+    </body>
 </html>

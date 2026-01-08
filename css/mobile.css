@@ -1,80 +1,221 @@
 /* Estilos específicos para Móvil */
-* { -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
-textarea, input { user-select: text; -webkit-user-select: text; }
+* {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+textarea,
+input {
+    user-select: text;
+    -webkit-user-select: text;
+}
 
 /* Overlay de Rotación */
 #rotate-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: #264653; color: white; z-index: 10000;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #264653;
+    color: white;
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
 }
-#rotate-overlay .icon { font-size: 4rem; animation: rotate-phone 2s infinite ease-in-out; margin-bottom: 20px;}
-@keyframes rotate-phone { 0%, 10% { transform: rotate(0deg); } 40%, 60% { transform: rotate(90deg); } 90%, 100% { transform: rotate(0deg); } }
+#rotate-overlay .icon {
+    font-size: 4rem;
+    animation: rotate-phone 2s infinite ease-in-out;
+    margin-bottom: 20px;
+}
+@keyframes rotate-phone {
+    0%,
+    10% {
+        transform: rotate(0deg);
+    }
+    40%,
+    60% {
+        transform: rotate(90deg);
+    }
+    90%,
+    100% {
+        transform: rotate(0deg);
+    }
+}
 
 @media screen and (orientation: portrait) {
-    body.fullscreen-active #rotate-overlay { display: flex !important; }
+    body.fullscreen-active #rotate-overlay {
+        display: flex !important;
+    }
 }
 
-.main-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 1rem; }
+.main-container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 1rem;
+}
 
 .controls-card {
-    background: #fff; padding: 15px; border-radius: var(--border-radius);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 15px;
+    background: #fff;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.control-group { display: flex; gap: 10px; width: 100%; }
+.control-group {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
 
 button {
-    padding: 15px 10px; font-size: 1rem; flex: 1; background-color: var(--primary-color);
+    padding: 15px 10px;
+    font-size: 1rem;
+    flex: 1;
+    background-color: var(--primary-color);
 }
-button.stop { background-color: #e76f51; }
-button.fullscreen-btn { background-color: var(--secondary-color); }
-button.wpm-btn { background-color: #ddd; color: #333; font-size: 1.2rem; max-width: 60px; }
+button.stop {
+    background-color: #e76f51;
+}
+button.fullscreen-btn {
+    background-color: var(--secondary-color);
+}
+button.wpm-btn {
+    background-color: #ddd;
+    color: #333;
+    font-size: 1.2rem;
+    max-width: 60px;
+}
 
 .wpm-stepper {
-    display: flex; align-items: center; justify-content: space-between;
-    background: #f8f8f8; padding: 5px; border-radius: 8px; width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f8f8;
+    padding: 5px;
+    border-radius: 8px;
+    width: 100%;
 }
-.wpm-value { font-size: 1.5rem; font-weight: bold; flex: 1; text-align: center; font-family: monospace; }
+.wpm-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    flex: 1;
+    text-align: center;
+    font-family: monospace;
+}
 
 /* Ajustes Lector Móvil */
-#reader-display { touch-action: manipulation; }
+#reader-display {
+    touch-action: manipulation;
+}
 
 .tap-feedback {
-    position: absolute; top: 0; height: 100%; width: 20%;
-    display: flex; align-items: center; justify-content: center; font-size: 3rem; color: rgba(0,0,0,0.2);
-    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
 }
-.tap-feedback.left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.05), transparent); }
-.tap-feedback.right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.05), transparent); }
-.tap-feedback.active { opacity: 1; }
+.tap-feedback.left {
+    left: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.05), transparent);
+}
+.tap-feedback.right {
+    right: 0;
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.05), transparent);
+}
+.tap-feedback.active {
+    opacity: 1;
+}
 
 /* HUD Minimalista */
 #mobile-fs-toolbar {
-    position: fixed; bottom: 20px; right: 20px; left: auto; width: auto;
-    display: none; flex-direction: row; gap: 15px; z-index: 20; pointer-events: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+    width: auto;
+    display: none;
+    flex-direction: row;
+    gap: 15px;
+    z-index: 20;
+    pointer-events: none;
 }
-#reader-display:fullscreen #mobile-fs-toolbar { display: flex; }
+#reader-display:fullscreen #mobile-fs-toolbar {
+    display: flex;
+}
 
 .fs-capsule {
-    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); padding: 5px 10px;
-    border-radius: 30px; display: flex; align-items: center; gap: 10px;
-    pointer-events: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    padding: 5px 10px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-.fs-wpm-btn, .fs-icon-btn { 
-    background: rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; 
-    border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+.fs-wpm-btn,
+.fs-icon-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
 }
-.fs-icon-btn { background: rgba(255,255,255,0.15); font-size: 1.2rem; }
-.fs-wpm-val { color: white; font-weight: bold; font-family: monospace; min-width: 50px; text-align: center; font-size: 1.2rem;}
-.fs-exit-btn { background: rgba(231, 111, 81, 0.9); }
-.fs-ctx-btn { background: rgba(69, 123, 157, 0.9); }
+.fs-icon-btn {
+    background: rgba(255, 255, 255, 0.15);
+    font-size: 1.2rem;
+}
+.fs-wpm-val {
+    color: white;
+    font-weight: bold;
+    font-family: monospace;
+    min-width: 50px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+.fs-exit-btn {
+    background: rgba(231, 111, 81, 0.9);
+}
+.fs-ctx-btn {
+    background: rgba(69, 123, 157, 0.9);
+}
 
 /* Context Overlay para Móvil */
 #context-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     -webkit-overflow-scrolling: touch;
 }
-#reader-display:fullscreen #context-overlay { position: absolute; padding: 4rem 2rem; }
+#reader-display:fullscreen #context-overlay {
+    position: absolute;
+    padding: 4rem 2rem;
+}

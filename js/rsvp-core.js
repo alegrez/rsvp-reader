@@ -1,4 +1,4 @@
-const PARAGRAPH_TOKEN = "___PB___";
+const PARAGRAPH_TOKEN = '___PB___';
 
 /**
  * Detects Markdown syntax
@@ -15,14 +15,14 @@ function isMarkdown(text) {
 function findBetterSplitPoint(text) {
     const len = text.length;
     const mid = Math.floor(len / 2);
-    
+
     if (len < 6) return mid;
 
-    const searchRange = 4; 
+    const searchRange = 4;
     const start = Math.max(1, mid - searchRange);
     const end = Math.min(len - 2, mid + searchRange);
 
-    const vowels = "aeiouáéíóúüAEIOUÁÉÍÓÚÜàèìòùÀÈÌÒÙäëïöüÄËÏÖÜâêîôûÂÊÎÔÛãõÃÕ";
+    const vowels = 'aeiouáéíóúüAEIOUÁÉÍÓÚÜàèìòùÀÈÌÒÙäëïöüÄËÏÖÜâêîôûÂÊÎÔÛãõÃÕ';
     const isV = (char) => vowels.includes(char);
 
     for (let offset = 0; offset <= searchRange; offset++) {
@@ -34,7 +34,7 @@ function findBetterSplitPoint(text) {
                 const nextChar = text[idx + 1];
 
                 if (isV(char) && !isV(nextChar)) {
-                    return idx + 1; 
+                    return idx + 1;
                 }
             }
         }
@@ -63,44 +63,44 @@ function smartSplit(rawWord) {
     }
 
     const hasNaturalSeparator = /[-—–_\/]/.test(rawWord);
-    const MAX_LEN = 16; 
+    const MAX_LEN = 16;
 
     if (!hasNaturalSeparator && rawWord.length > MAX_LEN) {
         const splitIdx = findBetterSplitPoint(rawWord);
-        
-        const part1 = rawWord.slice(0, splitIdx) + "-";
+
+        const part1 = rawWord.slice(0, splitIdx) + '-';
         const part2 = rawWord.slice(splitIdx);
 
         return [
             { text: part1, type: 'word' },
-            { text: part2, type: 'word' }
+            { text: part2, type: 'word' },
         ];
     }
 
     const parts = [];
-    let buffer = "";
-    
+    let buffer = '';
+
     for (let i = 0; i < rawWord.length; i++) {
         const char = rawWord[i];
         const isSeparator = /[-—–_\/]/.test(char);
-        
+
         if (isSeparator) {
             buffer += char;
 
             if (i < rawWord.length - 1) {
                 parts.push(buffer);
-                buffer = "";
+                buffer = '';
             }
         } else {
             buffer += char;
         }
     }
-    
+
     if (buffer.length > 0) {
         parts.push(buffer);
     }
 
-    return parts.map(p => ({ text: p, type: 'word' }));
+    return parts.map((p) => ({ text: p, type: 'word' }));
 }
 
 /**
@@ -114,11 +114,10 @@ function parseContent(rawText) {
         return parseHTMLToRSVP(html);
     }
 
-    const textWithTokens = rawText.replace(/\n\s*\n/g, ` ${PARAGRAPH_TOKEN} `)
-                                  .replace(/\n/g, ` ${PARAGRAPH_TOKEN} `);
-    
-    const rawWords = textWithTokens.split(/\s+/).filter(w => w.length > 0);
-    return rawWords.flatMap(w => smartSplit(w));
+    const textWithTokens = rawText.replace(/\n\s*\n/g, ` ${PARAGRAPH_TOKEN} `).replace(/\n/g, ` ${PARAGRAPH_TOKEN} `);
+
+    const rawWords = textWithTokens.split(/\s+/).filter((w) => w.length > 0);
+    return rawWords.flatMap((w) => smartSplit(w));
 }
 
 /**
@@ -126,34 +125,33 @@ function parseContent(rawText) {
  */
 function parseHTMLToRSVP(htmlString) {
     if (!htmlString || htmlString.trim().length === 0) return [];
-    
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
     let words = [];
 
     function walk(node, style) {
         if (node.nodeType === Node.TEXT_NODE) {
-            const rawParts = node.textContent.split(/\s+/).filter(w => w.length > 0);
-            
-            rawParts.forEach(raw => {
+            const rawParts = node.textContent.split(/\s+/).filter((w) => w.length > 0);
+
+            rawParts.forEach((raw) => {
                 const tokens = smartSplit(raw);
-                tokens.forEach(t => {
+                tokens.forEach((t) => {
                     words.push({ ...t, ...style });
                 });
             });
-
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             const tagName = node.tagName;
-            const isBlock = ['P','DIV','H1','H2','H3','H4','LI','BLOCKQUOTE','BR'].includes(tagName);
-            
-            if (isBlock && words.length > 0 && words[words.length-1].type !== 'break') {
+            const isBlock = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'LI', 'BLOCKQUOTE', 'BR'].includes(tagName);
+
+            if (isBlock && words.length > 0 && words[words.length - 1].type !== 'break') {
                 words.push({ text: PARAGRAPH_TOKEN, type: 'break' });
             }
 
             if (tagName === 'LI') {
-                let bullet = "•";
+                let bullet = '•';
                 const parent = node.parentElement;
-                
+
                 if (parent && parent.tagName === 'OL') {
                     let index = 1;
                     let sibling = node.previousElementSibling;
@@ -163,12 +161,12 @@ function parseHTMLToRSVP(htmlString) {
                     }
                     bullet = `${index}.`;
                 }
-                
-                words.push({ 
-                    text: bullet, 
-                    ...style, 
+
+                words.push({
+                    text: bullet,
+                    ...style,
                     bold: true,
-                    type: 'word' 
+                    type: 'word',
                 });
             }
 
@@ -181,9 +179,9 @@ function parseHTMLToRSVP(htmlString) {
                 newStyle.headerLevel = parseInt(tagName.substring(1));
             }
 
-            node.childNodes.forEach(child => walk(child, newStyle));
+            node.childNodes.forEach((child) => walk(child, newStyle));
 
-            if (isBlock && words.length > 0 && words[words.length-1].type !== 'break') {
+            if (isBlock && words.length > 0 && words[words.length - 1].type !== 'break') {
                 words.push({ text: PARAGRAPH_TOKEN, type: 'break' });
             }
         }
@@ -211,17 +209,17 @@ function renderWord(wordObj, outputElement) {
     const pivotEl = outputElement.children[1];
     const rightEl = outputElement.children[2];
 
-    const wordText = (typeof wordObj === 'string') ? wordObj : wordObj.text;
+    const wordText = typeof wordObj === 'string' ? wordObj : wordObj.text;
 
-    const isBreak = (wordObj && wordObj.type === 'break') || (wordText === PARAGRAPH_TOKEN);
+    const isBreak = (wordObj && wordObj.type === 'break') || wordText === PARAGRAPH_TOKEN;
 
-    outputElement.className = 'word-container'; 
+    outputElement.className = 'word-container';
 
     if (isBreak) {
-        leftEl.textContent = "";
-        pivotEl.textContent = "¶";
-        pivotEl.className = "pivot paragraph-symbol";
-        rightEl.textContent = "";
+        leftEl.textContent = '';
+        pivotEl.textContent = '¶';
+        pivotEl.className = 'pivot paragraph-symbol';
+        rightEl.textContent = '';
         return;
     } else {
         if (pivotEl.classList.contains('paragraph-symbol')) {
@@ -241,30 +239,32 @@ function renderWord(wordObj, outputElement) {
 
     const regex = /^([^\wáéíóúÁÉÍÓÚñÑüÜ]*)([\wáéíóúÁÉÍÓÚñÑüÜ\-\']+)([^\wáéíóúÁÉÍÓÚñÑüÜ]*)$/;
     const match = wordText.match(regex);
-    let prefix = "", core = wordText, suffix = "";
-    
-    if (match) { 
-        prefix = match[1]; 
-        core = match[2]; 
-        suffix = match[3]; 
+    let prefix = '',
+        core = wordText,
+        suffix = '';
+
+    if (match) {
+        prefix = match[1];
+        core = match[2];
+        suffix = match[3];
     }
 
     const len = core.length;
     let pivotIdx = 0;
-    
+
     if (len > 1) {
         pivotIdx = Math.floor((len - 1) / 2);
     }
 
     const coreLeft = core.slice(0, pivotIdx);
-    const pivotChar = core[pivotIdx] || "";
+    const pivotChar = core[pivotIdx] || '';
     const coreRight = core.slice(pivotIdx + 1);
 
     if (len === 0 && wordText.length > 0) {
         const mid = Math.floor(wordText.length / 2);
         leftEl.textContent = wordText.slice(0, mid);
         pivotEl.textContent = wordText[mid];
-        rightEl.textContent = wordText.slice(mid+1);
+        rightEl.textContent = wordText.slice(mid + 1);
         return;
     }
 
@@ -279,8 +279,8 @@ function renderWord(wordObj, outputElement) {
 let toastTimer;
 function showToast(msg, toastElement) {
     if (!toastElement) return;
-    toastElement.textContent = msg; 
-    toastElement.classList.add('show'); 
+    toastElement.textContent = msg;
+    toastElement.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastElement.classList.remove('show'), 1000);
 }
