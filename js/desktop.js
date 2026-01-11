@@ -411,6 +411,14 @@ function initData() {
     return true;
 }
 
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        readerDisplay.requestFullscreen().catch(err => alert(err));
+    } else {
+        document.exitFullscreen();
+    }
+}
+
 btnToggle.addEventListener('click', () => {
     if (ReaderEngine.words.length === 0) { if (!initData()) return; }
     if (isContextOpen) { toggleContextView(); ReaderEngine.start(); }
@@ -426,10 +434,7 @@ btnReset.addEventListener('click', () => {
 });
 
 btnContext.addEventListener('click', toggleContextView);
-btnFullscreen.addEventListener('click', () => { 
-    if (!document.fullscreenElement) { readerDisplay.requestFullscreen().catch(err => alert(err)); } 
-    else { document.exitFullscreen(); } 
-});
+btnFullscreen.addEventListener('click', toggleFullscreen);
 readerDisplay.addEventListener('click', (e) => { 
     if (e.target.closest('#context-overlay') || e.target.closest('#progress-indicator')) return; 
     ReaderEngine.toggle(); 
@@ -464,12 +469,9 @@ function toggleContextView() {
                     setTimeout(() => span.scrollIntoView({block: "center", behavior: "smooth"}), 50); 
                 }
                 span.onclick = () => { 
-                    ReaderEngine.loadContent(ReaderEngine.words, index);
-                    renderWord(ReaderEngine.words[index], wordOutput); 
-                    
                     ReaderEngine.currentIndex = index + 1;
+                    renderWord(ReaderEngine.words[index], wordOutput); 
                     ReaderEngine.updateProgress();
-                    
                     showToast("Jump", toast); 
                     toggleContextView(); 
                 };
@@ -511,5 +513,6 @@ document.addEventListener('keydown', (e) => {
             }
             break;
         case 'KeyV': e.preventDefault(); toggleContextView(); break;
+        case 'KeyF': e.preventDefault(); toggleFullscreen(); break;
     }
 });

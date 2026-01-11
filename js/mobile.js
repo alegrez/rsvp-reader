@@ -435,6 +435,26 @@ function flashFeedback(side) {
     el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 300);
 }
 
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        readerDisplay.requestFullscreen().catch(err => alert(err));
+        document.body.classList.add('fullscreen-active');
+        if (screen.orientation && screen.orientation.lock) {
+            try { screen.orientation.lock('landscape'); } catch (e) { console.warn(e); }
+        }
+    } else {
+        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+        document.exitFullscreen();
+        document.body.classList.remove('fullscreen-active');
+    }
+}
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        document.body.classList.remove('fullscreen-active');
+        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+    }
+});
+
 readerDisplay.addEventListener('touchend', (e) => {
     if (e.target.closest('#mobile-fs-toolbar') || 
         e.target.tagName === 'BUTTON' || 
@@ -496,30 +516,34 @@ readerDisplay.addEventListener('touchend', (e) => {
     e.preventDefault();
 });
 
-async function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        try {
-            await readerDisplay.requestFullscreen();
-            document.body.classList.add('fullscreen-active');
-            if (screen.orientation && screen.orientation.lock) {
-                try { await screen.orientation.lock('landscape'); } catch (e) { console.warn(e); }
-            }
-        } catch (err) { alert("Error: " + err.message); }
-    } else {
-        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-        document.exitFullscreen();
-        document.body.classList.remove('fullscreen-active');
-    }
-}
-document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement) {
-        document.body.classList.remove('fullscreen-active');
-        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+btnToggle.addEventListener('click', () => {
+    if (ReaderEngine.words.length === 0) { if (!initData()) return; }
+    if (isContextOpen) { toggleContextView(); ReaderEngine.start(); }
+    else ReaderEngine.toggle();
+});
+
+btnReset.addEventListener('click', () => {
+    ReaderEngine.reset();
+    if (currentMode === 'text') {
+        ReaderEngine.loadContent([]);
+        renderWord("Ready", wordOutput);
     }
 });
 
+btnContext.addEventListener('click', toggleContextView);
 btnFullscreen.addEventListener('click', toggleFullscreen);
 btnFsExit.addEventListener('click', toggleFullscreen);
+
+readerDisplay.addEventListener('click', (e) => { 
+    if (e.target.closest('#context-overlay') || e.target.closest('#progress-indicator')) return; 
+    ReaderEngine.toggle(); 
+});
+
+progressIndicator.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ReaderEngine.cycleProgressMode();
+    saveCurrentState();
+});
 
 function toggleContextView() {
     if (ReaderEngine.words.length === 0) { if (!initData()) return; }
@@ -529,11 +553,10 @@ function toggleContextView() {
         contextOverlay.innerHTML = '<button class="close-ctx-btn">Close X</button>';
         contextOverlay.querySelector('.close-ctx-btn').onclick = toggleContextView;
         ReaderEngine.words.forEach((wordObj, index) => {
-            if (wordObj.type === 'break') { 
+            if (wordObj.type === 'break') {
                 const br = document.createElement('div'); br.className = 'ctx-break'; contextOverlay.appendChild(br);
             } else {
                 const span = document.createElement('span'); span.textContent = wordObj.text + " "; span.className = 'ctx-word';
-                
                 if (wordObj.bold) span.style.fontWeight = 'bold';
                 if (wordObj.italic) span.style.fontStyle = 'italic';
                 if (wordObj.header) { 
@@ -541,20 +564,14 @@ function toggleContextView() {
                     if (wordObj.headerLevel === 1) { span.style.fontSize = '1.6em'; span.style.color = '#e76f51'; span.style.marginTop = '10px'; }
                     else if (wordObj.headerLevel === 2) { span.style.fontSize = '1.3em'; span.style.marginTop = '8px'; }
                 }
-
                 if (index === ReaderEngine.currentIndex - 1 && ReaderEngine.currentIndex > 0) { 
                     span.classList.add('current'); 
                     setTimeout(() => span.scrollIntoView({block: "center", behavior: "smooth"}), 50); 
                 }
-
                 span.onclick = () => { 
-                    ReaderEngine.loadContent(ReaderEngine.words, index);
-                    
-                    renderWord(ReaderEngine.words[index], wordOutput); 
-                    
                     ReaderEngine.currentIndex = index + 1;
+                    renderWord(ReaderEngine.words[index], wordOutput); 
                     ReaderEngine.updateProgress();
-
                     showToast("Jump", toast); 
                     toggleContextView(); 
                 };
@@ -564,24 +581,3 @@ function toggleContextView() {
         contextOverlay.classList.add('active');
     } else { contextOverlay.classList.remove('active'); }
 }
-
-btnToggle.addEventListener('click', () => {
-    if (ReaderEngine.words.length === 0) { if (!initData()) return; }
-    if (isContextOpen) { toggleContextView(); ReaderEngine.start(); }
-    else ReaderEngine.toggle();
-});
-btnReset.addEventListener('click', () => {
-    ReaderEngine.reset();
-    if(currentMode === 'text') {
-        ReaderEngine.loadContent([]);
-        renderWord("Ready", wordOutput);
-    }
-});
-btnContext.addEventListener('click', toggleContextView);
-btnFsContext.addEventListener('click', toggleContextView);
-
-progressIndicator.addEventListener('click', (e) => {
-    e.stopPropagation();
-    ReaderEngine.cycleProgressMode();
-    saveCurrentState();
-});
