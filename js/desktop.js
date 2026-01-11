@@ -464,9 +464,12 @@ function toggleContextView() {
                     setTimeout(() => span.scrollIntoView({block: "center", behavior: "smooth"}), 50); 
                 }
                 span.onclick = () => { 
-                    ReaderEngine.currentIndex = index; 
+                    ReaderEngine.loadContent(ReaderEngine.words, index);
                     renderWord(ReaderEngine.words[index], wordOutput); 
+                    
+                    ReaderEngine.currentIndex = index + 1;
                     ReaderEngine.updateProgress();
+                    
                     showToast("Jump", toast); 
                     toggleContextView(); 
                 };

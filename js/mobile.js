@@ -530,11 +530,10 @@ function toggleContextView() {
         contextOverlay.querySelector('.close-ctx-btn').onclick = toggleContextView;
         ReaderEngine.words.forEach((wordObj, index) => {
             if (wordObj.type === 'break') { 
-                contextOverlay.appendChild(document.createElement('div')).className = 'ctx-break'; 
+                const br = document.createElement('div'); br.className = 'ctx-break'; contextOverlay.appendChild(br);
             } else {
-                const span = document.createElement('span'); 
-                span.textContent = wordObj.text + " "; 
-                span.className = 'ctx-word';
+                const span = document.createElement('span'); span.textContent = wordObj.text + " "; span.className = 'ctx-word';
+                
                 if (wordObj.bold) span.style.fontWeight = 'bold';
                 if (wordObj.italic) span.style.fontStyle = 'italic';
                 if (wordObj.header) { 
@@ -542,14 +541,21 @@ function toggleContextView() {
                     if (wordObj.headerLevel === 1) { span.style.fontSize = '1.6em'; span.style.color = '#e76f51'; span.style.marginTop = '10px'; }
                     else if (wordObj.headerLevel === 2) { span.style.fontSize = '1.3em'; span.style.marginTop = '8px'; }
                 }
-                if (index > 0 && index - 1 === ReaderEngine.currentIndex) {
+
+                if (index === ReaderEngine.currentIndex - 1 && ReaderEngine.currentIndex > 0) { 
                     span.classList.add('current'); 
-                    setTimeout(() => span.scrollIntoView({block: "center"}), 50);
+                    setTimeout(() => span.scrollIntoView({block: "center", behavior: "smooth"}), 50); 
                 }
+
                 span.onclick = () => { 
-                    ReaderEngine.currentIndex = index; 
+                    ReaderEngine.loadContent(ReaderEngine.words, index);
+                    
                     renderWord(ReaderEngine.words[index], wordOutput); 
+                    
+                    ReaderEngine.currentIndex = index + 1;
                     ReaderEngine.updateProgress();
+
+                    showToast("Jump", toast); 
                     toggleContextView(); 
                 };
                 contextOverlay.appendChild(span);

@@ -91,11 +91,13 @@ const ReaderEngine = {
         
         const delta = direction === 'left' ? -jumpSize : jumpSize;
         
-        let newIndex = this.currentIndex + delta;
-        newIndex = Math.max(0, Math.min(this.words.length - 1, newIndex));
+        let targetIndex = (this.currentIndex > 0 ? this.currentIndex - 1 : 0) + delta;
+        targetIndex = Math.max(0, Math.min(this.words.length - 1, targetIndex));
         
-        this.currentIndex = newIndex;
-        this.ui.renderWord(this.words[this.currentIndex]);
+        this.ui.renderWord(this.words[targetIndex]);
+        
+        this.currentIndex = targetIndex + 1;
+        
         this.updateProgress();
         
         return jumpSize;
@@ -104,20 +106,23 @@ const ReaderEngine = {
     skipParagraph(direction) {
         if (!this.words.length) return;
         
-        let newIndex = this.currentIndex;
+        let searchIndex = this.currentIndex > 0 ? this.currentIndex - 1 : 0;
         
         if (direction === 'prev') {
-            newIndex = Math.max(0, newIndex - 2);
-            while (newIndex > 0 && this.words[newIndex].type !== 'break') newIndex--;
-            if (this.words[newIndex].type === 'break') newIndex++;
+            searchIndex = Math.max(0, searchIndex - 2);
+            while (searchIndex > 0 && this.words[searchIndex].type !== 'break') searchIndex--;
+            if (this.words[searchIndex].type === 'break') searchIndex++;
         } else {
-            while (newIndex < this.words.length && this.words[newIndex].type !== 'break') newIndex++;
-            if (newIndex < this.words.length) newIndex++;
+            while (searchIndex < this.words.length && this.words[searchIndex].type !== 'break') searchIndex++;
+            if (searchIndex < this.words.length) searchIndex++;
         }
 
-        newIndex = Math.max(0, Math.min(this.words.length - 1, newIndex));
-        this.currentIndex = newIndex;
-        this.ui.renderWord(this.words[this.currentIndex]);
+        searchIndex = Math.max(0, Math.min(this.words.length - 1, searchIndex));
+        
+        this.ui.renderWord(this.words[searchIndex]);
+        
+        this.currentIndex = searchIndex + 1;
+        
         this.updateProgress();
     },
 
@@ -134,7 +139,8 @@ const ReaderEngine = {
         }
 
         const total = this.words.length;
-        const current = Math.min(this.currentIndex + 1, total);
+        const current = this.currentIndex; 
+
         let text = "";
 
         if (this.progressMode === 1) {
@@ -143,7 +149,7 @@ const ReaderEngine = {
         } else if (this.progressMode === 2) {
             text = `${current} / ${total}`;
         } else if (this.progressMode === 3) {
-            text = this._calculateTimeRemaining(current - 1, total);
+            text = this._calculateTimeRemaining(current, total);
         }
 
         this.ui.renderProgress(text);
