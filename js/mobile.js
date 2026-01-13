@@ -533,9 +533,13 @@ btnReset.addEventListener('click', () => {
 btnContext.addEventListener('click', toggleContextView);
 btnFullscreen.addEventListener('click', toggleFullscreen);
 btnFsExit.addEventListener('click', toggleFullscreen);
+btnFsContext.addEventListener('click', toggleContextView);
 
 readerDisplay.addEventListener('click', (e) => { 
-    if (e.target.closest('#context-overlay') || e.target.closest('#progress-indicator')) return; 
+    if (e.target.closest('#context-overlay') || 
+        e.target.closest('#progress-indicator') ||
+        e.target.closest('#mobile-fs-toolbar') ||
+        e.target.tagName === 'BUTTON') return; 
     ReaderEngine.toggle(); 
 });
 
